@@ -1,0 +1,186 @@
+.dashboard {
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.logout-btn {
+  padding: 0.6em 1.2em;
+  font-size: 0.9em;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
+.logout-btn:hover {
+  background-color: #535bf2;
+}
+
+.dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+}
+
+.exercises-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.exercise-card {
+  background-color: #1a1a1a;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.exercise-card:hover {
+  border-color: #646cff;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(100, 108, 255, 0.2);
+}
+
+.exercise-card.completed {
+  border-color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.exercise-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.5rem;
+  color: #646cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-card.completed .exercise-icon {
+  color: #4caf50;
+}
+
+.exercise-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.exercise-name {
+  margin: 0;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.exercise-btn {
+  padding: 0.8em 1.5em;
+  font-size: 1em;
+  font-weight: 500;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s;
+  width: 100%;
+  max-width: 200px;
+}
+
+.exercise-btn:hover:not(:disabled) {
+  background-color: #535bf2;
+  transform: scale(1.05);
+}
+
+.exercise-btn:disabled {
+  background-color: #4caf50;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.exercise-btn.completed {
+  background-color: #4caf50;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .dashboard {
+    background-color: #ffffff;
+  }
+
+  .dashboard-header {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .dashboard-header h1 {
+    color: #213547;
+  }
+
+  .exercise-card {
+    background-color: #f9f9f9;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .exercise-card:hover {
+    border-color: #646cff;
+  }
+
+  .exercise-card.completed {
+    border-color: #4caf50;
+    background-color: rgba(76, 175, 80, 0.1);
+  }
+
+  .exercise-name {
+    color: #213547;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .exercises-container {
+    grid-template-columns: 1fr;
+  }
+}
+
