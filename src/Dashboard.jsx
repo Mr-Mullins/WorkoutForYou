@@ -1,22 +1,41 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 
-export default function Dashboard({ session }) {
+export default function Dashboard({ session, isAdmin = false, onShowAdmin }) {
   const [completed, setCompleted] = useState([])
+  const [exercises, setExercises] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Listen over øvelsene dine
-  const exercises = [
-    { id: 1, title: "1. Liggende Bekkenvipp", desc: "10-15 repetisjoner. Stram magen, press ryggen ned." },
-    { id: 2, title: "2. Barnets stilling", desc: "Hold 30-60 sek. Pass på kneprotesen." },
-    { id: 3, title: "3. Tøy hofteleddsbøyer", desc: "30 sek per side. Ikke svai i ryggen." },
-    { id: 4, title: "4. Fuglehunden", desc: "3 x 10 reps. Løft lavt og kontrollert." },
-    { id: 5, title: "5. Seteløft", desc: "3 x 10 reps. Stopp når kroppen er rett." }
-  ]
-
   useEffect(() => {
+    fetchExercises()
     fetchTodaysWorkouts()
   }, [])
+
+  async function fetchExercises() {
+    try {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .eq('active', true)
+        .order('order', { ascending: true })
+
+      if (error) throw error
+      
+      if (data) {
+        setExercises(data)
+      }
+    } catch (error) {
+      console.error('Feil ved henting av øvelser:', error.message)
+      // Fallback til hardkodede øvelser hvis tabellen ikke finnes ennå
+      setExercises([
+        { id: 1, title: "1. Liggende Bekkenvipp", description: "10-15 repetisjoner. Stram magen, press ryggen ned.", order: 1 },
+        { id: 2, title: "2. Barnets stilling", description: "Hold 30-60 sek. Pass på kneprotesen.", order: 2 },
+        { id: 3, title: "3. Tøy hofteleddsbøyer", description: "30 sek per side. Ikke svai i ryggen.", order: 3 },
+        { id: 4, title: "4. Fuglehunden", description: "3 x 10 reps. Løft lavt og kontrollert.", order: 4 },
+        { id: 5, title: "5. Seteløft", description: "3 x 10 reps. Stopp når kroppen er rett.", order: 5 }
+      ])
+    }
+  }
 
   async function fetchTodaysWorkouts() {
     try {
@@ -90,14 +109,24 @@ export default function Dashboard({ session }) {
       <header style={{textAlign: 'center', marginBottom: '30px', marginTop: '20px'}}>
         <h1>Hei, {session.user.email?.split('@')[0]}!</h1>
         <p className="subtitle">Dagens økt</p>
-        <button onClick={handleSignOut} style={styles.logoutBtn}>Logg ut</button>
+        <div style={{display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '10px'}}>
+          {isAdmin && (
+            <button 
+              onClick={onShowAdmin} 
+              style={{...styles.logoutBtn, background: '#f39c12', border: '1px solid #f39c12', color: 'white'}}
+            >
+              Admin
+            </button>
+          )}
+          <button onClick={handleSignOut} style={styles.logoutBtn}>Logg ut</button>
+        </div>
       </header>
 
       <div style={styles.progressContainer}>
-        <div style={{...styles.progressBar, width: `${(completed.length / 5) * 100}%`}}></div>
+        <div style={{...styles.progressBar, width: `${exercises.length > 0 ? (completed.length / exercises.length) * 100 : 0}%`}}></div>
       </div>
       <p style={{textAlign: 'center', fontSize: '0.9rem', marginBottom: '20px'}}>
-        {completed.length} av 5 fullført
+        {completed.length} av {exercises.length} fullført
       </p>
 
       {exercises.map(ex => {
@@ -108,7 +137,7 @@ export default function Dashboard({ session }) {
               <span style={styles.exerciseTitle}>{ex.title}</span>
               {isDone && <span style={{color: '#27ae60', fontWeight: 'bold'}}>✓</span>}
             </div>
-            <div style={styles.details}>{ex.desc}</div>
+            <div style={styles.details}>{ex.description || ex.desc}</div>
             <button 
               onClick={() => toggleExercise(ex.id)}
               style={{...styles.actionBtn, ...(isDone ? styles.btnActive : {})}}
