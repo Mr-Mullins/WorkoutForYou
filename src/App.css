@@ -2,3 +2,25 @@
   width: 100%;
   min-height: 100vh;
 }
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  width: 100%;
+}
+
+/* Skjul "Sign in with Email" provider-knappen i Supabase Auth UI */
+/* Mer konservativ tilnærming - kun skjul provider-knappen, ikke hele skjemaet */
+.auth-wrapper button[data-state="default"]:first-child,
+.auth-wrapper > div > div > div:first-child:has(button[data-state="default"]),
+.auth-wrapper [data-state] > div:first-child:has(button[data-state="default"]) {
+  display: none !important;
+}

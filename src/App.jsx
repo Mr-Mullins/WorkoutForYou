@@ -4,6 +4,9 @@ import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from './supabaseClient'
 import Dashboard from './Dashboard'
 import Admin from './Admin'
+import UserAdmin from './UserAdmin'
+import Sidebar from './Sidebar'
+import SignUpForm from './SignUpForm'
 import './App.css'
 
 function UpdatePasswordForm() {
@@ -126,7 +129,9 @@ function UpdatePasswordForm() {
 function App() {
   const [session, setSession] = useState(null)
   const [showPasswordReset, setShowPasswordReset] = useState(false)
-  const [showAdmin, setShowAdmin] = useState(false)
+  const [showSignUp, setShowSignUp] = useState(false)
+  const [currentView, setCurrentView] = useState('dashboard')
+  const [userProfile, setUserProfile] = useState(null)
 
   // Enkel admin-sjekk basert på e-postadresse
   // Du kan endre dette til å bruke en admin-rolle i Supabase hvis du vil
@@ -154,15 +159,18 @@ function App() {
       return false
     }
 
+    const loadSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setSession(session)
+      if (session?.user) {
+        fetchUserProfile(session.user.id)
+      }
+    }
+
     if (checkRecoveryLink()) {
-      // Hvis vi har en recovery link, prøv å hente session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-      })
+      loadSession()
     } else {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-      })
+      loadSession()
     }
 
     const {
@@ -173,35 +181,216 @@ function App() {
         setShowPasswordReset(true)
       }
       setSession(session)
+      
+      // Hent brukerprofil når session endres
+      if (session?.user) {
+        fetchUserProfile(session.user.id)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  async function fetchUserProfile(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        // Hvis profil ikke finnes, opprett den
+        if (error.code === 'PGRST116') {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const firstName = user.user_metadata?.first_name || ''
+            const lastName = user.user_metadata?.last_name || ''
+            const avatarUrl = user.user_metadata?.avatar_url || ''
+            
+            // Prøv å opprette profil
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                user_id: userId,
+                first_name: firstName,
+                last_name: lastName,
+                avatar_url: avatarUrl
+              })
+
+            if (!insertError) {
+              setUserProfile({ first_name: firstName, last_name: lastName, avatar_url: avatarUrl })
+              return
+            }
+          }
+        }
+        
+        // Fallback til user_metadata
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUserProfile({
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            avatar_url: user.user_metadata?.avatar_url || ''
+          })
+        }
+        return
+      }
+
+      if (data) {
+        setUserProfile(data)
+      } else {
+        // Fallback til user_metadata
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUserProfile({
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            avatar_url: user.user_metadata?.avatar_url || ''
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Feil ved henting av profil:', error)
+      // Fallback til user_metadata
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserProfile({
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          avatar_url: user.user_metadata?.avatar_url || ''
+        })
+      }
+    }
+  }
 
   // Hvis brukeren er på nullstillingssiden, vis passord-skjema
   if (showPasswordReset) {
     return <UpdatePasswordForm />
   }
 
+  useEffect(() => {
+    // Fjern "Sign in with Email" knappen når Auth-komponenten er lastet
+    const removeProviderButton = () => {
+      const authWrapper = document.querySelector('.auth-wrapper')
+      if (authWrapper) {
+        // Finn alle buttons og sjekk om de er provider-knapper
+        const buttons = authWrapper.querySelectorAll('button[data-state="default"]')
+        buttons.forEach(button => {
+          const text = button.textContent || button.innerText || ''
+          // Kun fjern hvis det er "Sign in with Email" knappen
+          if (text.toLowerCase().includes('sign in with email') || 
+              (text.toLowerCase().includes('email') && text.toLowerCase().includes('sign'))) {
+            button.style.display = 'none'
+            // Hvis parent div bare inneholder denne knappen, skjul den også
+            const parent = button.parentElement
+            if (parent && parent.children.length === 1 && parent.tagName === 'DIV') {
+              parent.style.display = 'none'
+            }
+          }
+        })
+      }
+    }
+
+    // Kjør etter en liten delay for å la Auth-komponenten rendres først
+    const timer = setTimeout(removeProviderButton, 200)
+    const timer2 = setTimeout(removeProviderButton, 1000)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(timer2)
+    }
+  }, [session, showSignUp])
+
   if (!session) {
+    if (showSignUp) {
+      return (
+        <div className="auth-container">
+          <SignUpForm 
+            onSignUpSuccess={() => setShowSignUp(false)}
+            onBack={() => setShowSignUp(false)}
+          />
+        </div>
+      )
+    }
+    
     return (
       <div className="auth-container">
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          providers={['email']}
-        />
+        <div style={{ maxWidth: '400px', width: '100%' }}>
+          <div className="auth-wrapper">
+            <Auth
+              supabaseClient={supabase}
+              appearance={{ 
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#27ae60',
+                      brandAccent: '#229954',
+                    }
+                  }
+                }
+              }}
+              providers={['email']}
+              view="sign_in"
+              onlyThirdPartyProviders={false}
+              magicLink={false}
+            />
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <button
+              onClick={() => setShowSignUp(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#646cff',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '14px'
+              }}
+            >
+              Har du ikke konto? Registrer deg her
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
 
-  // Vis Admin-komponenten hvis brukeren er admin og har valgt å vise admin
-  if (showAdmin && isAdmin()) {
-    return <Admin session={session} onBack={() => setShowAdmin(false)} />
-  }
-
-  // Vis Dashboard med admin-knapp hvis brukeren er admin
-  return <Dashboard session={session} isAdmin={isAdmin()} onShowAdmin={() => setShowAdmin(true)} />
+  // Layout med sidebar
+  return (
+    <div className="app-layout">
+      <Sidebar
+        session={session}
+        isAdmin={isAdmin()}
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        onSignOut={() => setSession(null)}
+        userProfile={userProfile}
+      />
+      <main className="main-content">
+        {currentView === 'admin' ? (
+          <Admin session={session} onBack={() => setCurrentView('dashboard')} />
+        ) : currentView === 'profile' ? (
+          <UserAdmin 
+            session={session} 
+            onProfileUpdate={() => {
+              if (session?.user) {
+                fetchUserProfile(session.user.id)
+              }
+            }}
+          />
+        ) : (
+          <Dashboard 
+            session={session} 
+            isAdmin={isAdmin()} 
+            onShowAdmin={() => setCurrentView('admin')} 
+            userProfile={userProfile}
+          />
+        )}
+      </main>
+    </div>
+  )
 }
 
 export default App
