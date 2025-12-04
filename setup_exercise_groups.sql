@@ -79,3 +79,4 @@ END $$;
 -- Alle eksisterende øvelser er nå knyttet til "Rygg" gruppen
 -- Du kan nå opprette flere exercise groups og knytte øvelser til dem
 
+

@@ -1,17 +1,48 @@
+/* Sticky Header */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #2c3e50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1002;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: none; /* Skjult på desktop */
+}
+
+.header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.header-spacer {
+  width: 44px; /* Samme bredde som hamburger-knappen for å sentrere tittelen */
+}
+
 /* Sidebar Toggle (Hamburger) Button */
 .sidebar-toggle {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 1001;
   background: #27ae60;
   border: none;
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
-  display: none; /* Skjult på desktop */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
 }
 
 .sidebar-toggle:hover {
@@ -202,22 +233,28 @@
 /* Main content area */
 .main-content {
   margin-left: 250px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 0;
   min-height: 100vh;
   transition: margin-left 0.3s ease;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .sidebar-toggle {
-    display: block;
+  .app-header {
+    display: flex;
   }
 
   .sidebar-overlay {
     display: block;
+    top: 60px; /* Start under headeren */
   }
 
   .sidebar {
     transform: translateX(-100%);
+    top: 60px; /* Start under headeren */
+    height: calc(100vh - 60px);
   }
 
   .sidebar.open {
@@ -226,6 +263,7 @@
 
   .main-content {
     margin-left: 0;
+    padding-top: 60px; /* Plass for sticky header */
   }
 }
 

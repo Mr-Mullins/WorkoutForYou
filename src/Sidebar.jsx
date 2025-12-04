@@ -17,18 +17,22 @@ export default function Sidebar({ session, isAdmin, currentView, onNavigate, onS
 
   return (
     <>
-      {/* Hamburger-knapp for mobil */}
-      <button 
-        className="sidebar-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle menu"
-      >
-        <span className={`hamburger ${isOpen ? 'open' : ''}`}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-      </button>
+      {/* Sticky Header */}
+      <header className="app-header">
+        <button 
+          className="sidebar-toggle"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger ${isOpen ? 'open' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+        <h1 className="header-title">WorkOutForYou</h1>
+        <div className="header-spacer"></div>
+      </header>
 
       {/* Overlay for mobil */}
       {isOpen && (

@@ -162,3 +162,4 @@ ON CONFLICT DO NOTHING;
 -- - workouts: Lagrer completed workouts (user_id, exercise_id, completed_at)
 -- - user_profiles: Brukerprofiler med fornavn, etternavn og profilbilde
 
+

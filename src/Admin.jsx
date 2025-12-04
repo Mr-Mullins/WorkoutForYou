@@ -87,7 +87,7 @@ export default function Admin({ session, onBack }) {
 
         if (error) throw error
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('exercise_groups')
           .insert([
             {
@@ -97,14 +97,28 @@ export default function Admin({ session, onBack }) {
               active: groupFormData.active
             }
           ])
+          .select()
+          .single()
 
         if (error) throw error
+
+        // Hvis vi opprettet en ny gruppe, sett den som valgt
+        if (data) {
+          await fetchExerciseGroups()
+          setSelectedGroupId(data.id)
+        } else {
+          await fetchExerciseGroups()
+        }
       }
 
       setGroupFormData({ name: '', description: '', order: exerciseGroups.length + 1, active: true })
       setEditingGroupId(null)
       setShowGroupForm(false)
-      fetchExerciseGroups()
+      
+      // Hvis vi redigerte en eksisterende gruppe, oppdater listen
+      if (editingGroupId) {
+        await fetchExerciseGroups()
+      }
     } catch (error) {
       alert('Feil ved lagring av gruppe: ' + error.message)
     }

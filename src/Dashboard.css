@@ -5,6 +5,20 @@
   margin: 0 auto;
 }
 
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+  padding-top: 100px;
+  box-sizing: border-box;
+}
+
+.container > header {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -168,6 +182,100 @@
   }
 }
 
+/* Tabs styling */
+.tabs-container {
+  display: flex;
+  gap: 0;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.tab-button {
+  padding: 14px 20px;
+  margin-right: 50px !important;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-bottom: 3px solid transparent;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  bottom: -2px;
+  border-radius: 12px 12px 0 0;
+  min-width: 120px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tab-name {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tab-counter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: -0.5px;
+  margin-left: 4px;
+}
+
+.tab-button:last-child {
+  margin-right: 0;
+}
+
+.tab-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.tab-button.active {
+  background: #ffffff;
+  border-bottom-width: 4px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.tab-button.active .tab-counter {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.tab-button.completed {
+  background: #f0fff4;
+  color: #27ae60;
+  border-color: #27ae60;
+}
+
+.tab-button.completed:hover {
+  background: #e8f5e9;
+  border-color: #229954;
+  color: #229954;
+}
+
+.tab-button.completed.active {
+  background: #ffffff;
+  color: #27ae60;
+  border-color: #27ae60;
+  border-bottom-color: #27ae60;
+}
+
+.tab-button.completed .tab-counter {
+  color: #27ae60;
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
   .dashboard {
     padding: 1rem;
@@ -181,6 +289,18 @@
 
   .exercises-container {
     grid-template-columns: 1fr;
+  }
+
+  .tabs-container {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    margin-top: 0;
+    padding: 0 1rem;
+  }
+  
+  .container {
+    padding-top: 100px;
+    max-width: 100%;
   }
 }
 
