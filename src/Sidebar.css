@@ -6,13 +6,12 @@
   right: 0;
   height: 60px;
   background: #2c3e50;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   z-index: 1002;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: none; /* Skjult på desktop */
 }
 
 .header-title {
@@ -26,7 +25,7 @@
 }
 
 .header-spacer {
-  width: 44px; /* Samme bredde som hamburger-knappen for å sentrere tittelen */
+  width: 44px;
 }
 
 /* Sidebar Toggle (Hamburger) Button */
@@ -233,12 +232,9 @@
 /* Main content area */
 .main-content {
   margin-left: 250px;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 0;
+  padding: 20px;
   min-height: 100vh;
   transition: margin-left 0.3s ease;
-  width: calc(100% - 250px);
   box-sizing: border-box;
 }
 
@@ -250,12 +246,12 @@
 
   .sidebar-overlay {
     display: block;
-    top: 60px; /* Start under headeren */
+    top: 60px;
   }
 
   .sidebar {
     transform: translateX(-100%);
-    top: 60px; /* Start under headeren */
+    top: 60px;
     height: calc(100vh - 60px);
   }
 
@@ -265,7 +261,8 @@
 
   .main-content {
     margin-left: 0;
-    padding-top: 60px; /* Plass for sticky header */
+    padding: 0;
+    padding-top: 60px;
   }
 }
 
@@ -286,4 +283,3 @@
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
-
