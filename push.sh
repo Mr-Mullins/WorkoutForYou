@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Kjøres slik:
+# ./push.sh "Min egen commit-melding"
+
+
 # Farger for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -42,4 +46,5 @@ else
     echo -e "\n${RED}❌ Feil ved push. Sjekk feilmeldingen over.${NC}"
     exit 1
 fi
+
 
