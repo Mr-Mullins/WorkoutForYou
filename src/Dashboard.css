@@ -24,19 +24,19 @@
   gap: 0;
   margin: 10px 0 20px 0;
   padding: 0;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 1px solid #b8b5b5;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 
 .tab-button {
-  padding: 14px 20px;
-  margin-right: 50px;
+  padding:6px 10px;
+  margin-right: 5px;
   background: #f8f9fa;
-  border: 2px solid #e0e0e0;
-  border-bottom: 3px solid transparent;
-  color: #2c3e50;
+  border: 1px solid #e0e0e0;
+  border-bottom: 1px solid transparent;
+  color: #502c2d;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -61,7 +61,7 @@
 
 .tab-button.active {
   background: #ffffff;
-  border-bottom-width: 4px;
+  border-bottom-width: 1px;
   font-weight: bold;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
@@ -111,12 +111,15 @@
 
 /* Exercises Wrapper */
 .exercises-wrapper {
-  margin: 0;
-  padding: 0;
+  margin: 20px;
+  padding: 20px;
   box-sizing: border-box;
-  display: flex;
+  display: flex;      
   flex-direction: column;
   align-items: stretch;
+  border:solid 0px #b0afaf;
+  /* border: 1px solid #b0afaf; */
+
 }
 
 /* Exercise Card */
@@ -126,8 +129,11 @@
   padding: 20px;
   margin: 0 0 15px 0;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid transparent;
+  border: 1px solid #b0afaf;
   box-sizing: border-box;
+  width: 100%;
+  Max-width: 600px;
+  margin: 0 auto 15px auto;  /* Endre margin for å sentrere */
 }
 
 .exercise-card.completed {
@@ -190,7 +196,7 @@
 
 .exercise-button {
   width: auto;
-  min-width: 140px;
+  min-width: 100px;
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
@@ -202,10 +208,57 @@
   transition: all 0.2s;
   box-sizing: border-box;
   white-space: nowrap;
+  position: relative;  /* Legg til denne linjen for tooltip posisjonering */
+
+}
+
+/* Tooltip - vises over knappen */
+.exercise-button::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: #2c3e50;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  margin-bottom: 8px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.exercise-button:hover::before {
+  opacity: 1;
+}
+
+/* Pil under tooltip */
+/* .exercise-button::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #2c5037;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  margin-bottom: 2px;
+  z-index: 1000;
+}
+ */
+.exercise-button:hover::after {
+  opacity: 1;
 }
 
 .exercise-button:hover:not(:disabled) {
-  background: #d5dbdb;
+  background: #dbdad5;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -220,9 +273,10 @@
   cursor: not-allowed;
 }
 
+
 .no-exercises {
   text-align: center;
-  color: #999;
+  color: #999999;
   padding: 40px 20px;
   font-size: 1rem;
 }

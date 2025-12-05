@@ -163,3 +163,6 @@ ON CONFLICT DO NOTHING;
 -- - user_profiles: Brukerprofiler med fornavn, etternavn og profilbilde
 
 
+
+
+

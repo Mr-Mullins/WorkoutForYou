@@ -80,3 +80,6 @@ END $$;
 -- Du kan nå opprette flere exercise groups og knytte øvelser til dem
 
 
+
+
+

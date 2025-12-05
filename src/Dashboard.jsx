@@ -87,23 +87,15 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
         }
       }
     } catch (error) {
-      console.error('Feil ved henting av exercise groups:', error.message)
-      const fallbackGroup = {
-        id: 0,
-        name: 'Rygg',
-        description: '',
-        exercises: [
-          { id: 1, title: "1. Liggende Bekkenvipp", description: "10-15 repetisjoner. Stram magen, press ryggen ned.", order: 1 },
-          { id: 2, title: "2. Barnets stilling", description: "Hold 30-60 sek. Pass på kneprotesen.", order: 2 },
-          { id: 3, title: "3. Tøy hofteleddsbøyer", description: "30 sek per side. Ikke svai i ryggen.", order: 3 },
-          { id: 4, title: "4. Fuglehunden", description: "3 x 10 reps. Løft lavt og kontrollert.", order: 4 },
-          { id: 5, title: "5. Seteløft", description: "3 x 10 reps. Stopp når kroppen er rett.", order: 5 }
-        ]
-      }
-      setExerciseGroups([fallbackGroup])
-      if (selectedGroupId === null) {
-        setSelectedGroupId(0)
-      }
+      console.error('Feil ved henting av øvelser:', error.message)
+      // Fallback til hardkodede øvelser hvis tabellen ikke finnes ennå
+      setExercises([
+        { id: 1, title: "1. Liggende Bekkenvipp", description: "10-15 repetisjoner. Stram magen, press ryggen ned.", order: 1 },
+        { id: 2, title: "2. Barnets stilling", description: "Hold 30-60 sek. Pass på kneprotesen.", order: 2 },
+        { id: 3, title: "3. Tøy hofteleddsbøyer", description: "30 sek per side. Ikke svai i ryggen.", order: 3 },
+        { id: 4, title: "4. Fuglehunden", description: "3 x 10 reps. Løft lavt og kontrollert.", order: 4 },
+        { id: 5, title: "5. Seteløft", description: "3 x 10 reps. Stopp når kroppen er rett.", order: 5 }
+      ])
     }
   }
 
@@ -248,6 +240,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                           className={`exercise-button ${isDone ? 'completed' : ''}`}
                           onClick={() => toggleExercise(ex.id)}
                           disabled={isDone}
+                          data-tooltip={isDone ? "Øvelsen er allerede utført i dag" : "Klikk for å markere øvelsen som utført"}
                         >
                           {isDone ? 'Utført!' : 'Marker som utført'}
                         </button>
