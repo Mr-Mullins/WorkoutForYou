@@ -27,10 +27,13 @@ export default function UserAdmin({ session, onProfileUpdate }) {
       }
 
       if (data) {
+        // Håndter både avatar_url og avatar_URL (små og store bokstaver)
+        const avatarUrl = data.avatar_url || data.avatar_URL || ''
+        
         setProfile({
           firstName: data.first_name || '',
           lastName: data.last_name || '',
-          avatarUrl: data.avatar_url || ''
+          avatarUrl: avatarUrl
         })
       } else {
         // Hvis ingen profil finnes, prøv å hente fra user_metadata
@@ -114,40 +117,150 @@ export default function UserAdmin({ session, onProfileUpdate }) {
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${session.user.id}-${Date.now()}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      const filePath = fileName
 
       // Slett gammelt bilde hvis det finnes
       if (profile.avatarUrl) {
         try {
+          // Hent filnavn fra URL-en
           const urlParts = profile.avatarUrl.split('/')
-          const fileName = urlParts[urlParts.length - 1]
-          if (fileName && fileName.includes('.')) {
-            await supabase.storage.from('avatars').remove([`avatars/${fileName}`])
+          let oldFileName = urlParts[urlParts.length - 1]
+          
+          // Fjern query parameters hvis de finnes
+          oldFileName = oldFileName.split('?')[0]
+          
+          if (oldFileName && oldFileName.includes('.')) {
+            // Prøv å slette med bare filnavnet
+            const { error: removeError } = await supabase.storage
+              .from('avatars')
+              .remove([oldFileName])
+            
+            if (removeError) {
+              console.log('Første slettingsforsøk feilet, prøver alternativ path:', removeError.message)
+              // Prøv alternativ path hvis første feiler
+              try {
+                const { error: altError } = await supabase.storage
+                  .from('avatars')
+                  .remove([`avatars/${oldFileName}`])
+                if (altError) {
+                  console.log('Alternativ sletting feilet også:', altError.message)
+                }
+              } catch (altError) {
+                console.log('Alternativ sletting feilet også:', altError)
+              }
+            }
           }
         } catch (error) {
-          console.error('Kunne ikke slette gammelt bilde:', error)
+          console.log('Feil ved sletting av gammelt bilde (ikke kritisk):', error)
+          // Fortsett uansett - ikke kast feil
         }
       }
 
       // Last opp nytt bilde
-      const { error: uploadError } = await supabase.storage
+      console.log('Laster opp bilde med path:', filePath)
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
         })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Upload error detaljer:', {
+          message: uploadError.message,
+          statusCode: uploadError.statusCode,
+          error: uploadError.error
+        })
+        throw new Error(`Kunne ikke laste opp bilde: ${uploadError.message}`)
+      }
 
-      // Hent public URL
+      console.log('Bilde lastet opp, henter public URL...')
+      // Hent public URL - bruk riktig path
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
+      
+      console.log('Public URL hentet:', publicUrl)
 
-      setProfile({ ...profile, avatarUrl: publicUrl })
-      setMessage('Bilde lastet opp! Husk å lagre endringene.')
+      if (!publicUrl) {
+        throw new Error('Kunne ikke hente URL for opplastet bilde')
+      }
+
+      // Oppdater state
+      const newProfile = { ...profile, avatarUrl: publicUrl }
+      setProfile(newProfile)
+
+      // Lagre automatisk i databasen
+      console.log('Lagrer URL i database:', publicUrl)
+      const { data: dbData, error: dbError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: session.user.id,
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          avatar_url: publicUrl, // Lagre URL-en direkte
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (dbError) {
+        console.error('Database error detaljer:', {
+          message: dbError.message,
+          code: dbError.code,
+          details: dbError.details,
+          hint: dbError.hint
+        })
+        // Prøv alternativ kolonnenavn hvis det feiler (hvis databasen har avatar_URL)
+        try {
+          const { error: altDbError } = await supabase
+            .from('user_profiles')
+            .upsert({
+              user_id: session.user.id,
+              first_name: profile.firstName,
+              last_name: profile.lastName,
+              avatar_URL: publicUrl, // Prøv med store bokstaver
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            })
+          
+          if (altDbError) {
+            throw altDbError
+          } else {
+            console.log('Lagret med avatar_URL (store bokstaver)')
+            setMessage('Bilde lastet opp og lagret!')
+          }
+        } catch (altError) {
+          console.error('Alternativ database lagring feilet også:', altError)
+          // Vis advarsel, men ikke kast feil - bildet er lastet opp
+          setMessage('Bilde lastet opp, men kunne ikke lagre i database. Prøv å lagre manuelt.')
+        }
+      } else {
+        console.log('URL lagret i database med avatar_url')
+        // Oppdater også user_metadata
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: {
+            first_name: profile.firstName,
+            last_name: profile.lastName,
+            avatar_url: publicUrl
+          }
+        })
+
+        if (metadataError) {
+          console.error('Metadata update error:', metadataError)
+        }
+
+        setMessage('Bilde lastet opp og lagret!')
+        
+        // Oppdater profil i parent component
+        if (onProfileUpdate) {
+          onProfileUpdate()
+        }
+      }
     } catch (error) {
-      setMessage('Feil ved opplasting av bilde: ' + error.message)
+      console.error('Upload error details:', error)
+      setMessage('Feil ved opplasting av bilde: ' + (error.message || 'Ukjent feil'))
     } finally {
       setUploading(false)
     }
@@ -156,18 +269,79 @@ export default function UserAdmin({ session, onProfileUpdate }) {
   async function handleRemoveImage() {
     if (!profile.avatarUrl) return
 
+    setUploading(true)
+    setMessage('')
+
     try {
+      // Hent filnavn fra URL-en
       const urlParts = profile.avatarUrl.split('/')
       const fileName = urlParts[urlParts.length - 1]
-      if (fileName && fileName.includes('.')) {
-        await supabase.storage.from('avatars').remove([`avatars/${fileName}`])
+      
+      // Fjern query parameters hvis de finnes
+      const cleanFileName = fileName.split('?')[0]
+      
+      if (cleanFileName && cleanFileName.includes('.')) {
+        // Prøv å slette med bare filnavnet
+        const { error: removeError } = await supabase.storage
+          .from('avatars')
+          .remove([cleanFileName])
+        
+        if (removeError) {
+          console.error('Remove error:', removeError)
+          // Prøv alternativ path
+          try {
+            await supabase.storage.from('avatars').remove([`avatars/${cleanFileName}`])
+          } catch (altError) {
+            console.error('Alternativ sletting feilet:', altError)
+          }
+        }
       }
-      setProfile({ ...profile, avatarUrl: '' })
-      setMessage('Bilde fjernet! Husk å lagre endringene.')
+      
+      // Oppdater state og database
+      const newProfile = { ...profile, avatarUrl: '' }
+      setProfile(newProfile)
+      
+      // Lagre i databasen
+      const { error: dbError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: session.user.id,
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          avatar_url: '',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (!dbError) {
+        // Oppdater også user_metadata
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: {
+            first_name: profile.firstName,
+            last_name: profile.lastName,
+            avatar_url: ''
+          }
+        })
+
+        if (metadataError) {
+          console.error('Metadata update error:', metadataError)
+        }
+
+        setMessage('Bilde fjernet!')
+        
+        if (onProfileUpdate) {
+          onProfileUpdate()
+        }
+      } else {
+        setMessage('Bilde fjernet fra visning. Husk å lagre endringene.')
+      }
     } catch (error) {
       console.error('Feil ved sletting av bilde:', error)
       setProfile({ ...profile, avatarUrl: '' })
-      setMessage('Bilde fjernet fra profil. Husk å lagre endringene.')
+      setMessage('Bilde fjernet fra visning. Husk å lagre endringene.')
+    } finally {
+      setUploading(false)
     }
   }
 

@@ -33,38 +33,36 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
   async function fetchExerciseGroups() {
     try {
+      // Optimalisert: Hent alle grupper med øvelser i ett enkelt kall ved hjelp av JOIN
       const { data: groups, error: groupsError } = await supabase
         .from('exercise_groups')
-        .select('*')
+        .select(`
+          *,
+          exercises:exercises!exercise_group_id(
+            *,
+            active
+          )
+        `)
         .eq('active', true)
         .order('order', { ascending: true })
 
       if (groupsError) throw groupsError
 
       if (groups && groups.length > 0) {
-        const groupsWithExercises = await Promise.all(
-          groups.map(async (group) => {
-            const { data: exercises, error: exercisesError } = await supabase
-              .from('exercises')
-              .select('*')
-              .eq('exercise_group_id', group.id)
-              .eq('active', true)
-              .order('order', { ascending: true })
-
-            if (exercisesError) {
-              console.error(`Feil ved henting av øvelser for gruppe ${group.id}:`, exercisesError)
-              return { ...group, exercises: [] }
-            }
-
-            return { ...group, exercises: exercises || [] }
-          })
-        )
+        // Filtrer og sorter øvelser for hver gruppe
+        const groupsWithExercises = groups.map(group => ({
+          ...group,
+          exercises: (group.exercises || [])
+            .filter(ex => ex.active)
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+        }))
 
         setExerciseGroups(groupsWithExercises)
         if (selectedGroupId === null && groupsWithExercises.length > 0) {
           setSelectedGroupId(groupsWithExercises[0].id)
         }
       } else {
+        // Fallback: Hent alle aktive øvelser hvis ingen grupper finnes
         const { data: exercises, error } = await supabase
           .from('exercises')
           .select('*')
@@ -88,14 +86,8 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       }
     } catch (error) {
       console.error('Feil ved henting av øvelser:', error.message)
-      // Fallback til hardkodede øvelser hvis tabellen ikke finnes ennå
-      setExercises([
-        { id: 1, title: "1. Liggende Bekkenvipp", description: "10-15 repetisjoner. Stram magen, press ryggen ned.", order: 1 },
-        { id: 2, title: "2. Barnets stilling", description: "Hold 30-60 sek. Pass på kneprotesen.", order: 2 },
-        { id: 3, title: "3. Tøy hofteleddsbøyer", description: "30 sek per side. Ikke svai i ryggen.", order: 3 },
-        { id: 4, title: "4. Fuglehunden", description: "3 x 10 reps. Løft lavt og kontrollert.", order: 4 },
-        { id: 5, title: "5. Seteløft", description: "3 x 10 reps. Stopp når kroppen er rett.", order: 5 }
-      ])
+      // Fallback til tom liste hvis tabellen ikke finnes ennå
+      setExerciseGroups([])
     }
   }
 
