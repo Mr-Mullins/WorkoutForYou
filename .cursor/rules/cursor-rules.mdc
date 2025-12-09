@@ -1,0 +1,366 @@
+# Project Rules: WorkoutForYou - React + Vite + Supabase
+
+## Application Overview
+WorkoutForYou is a Norwegian workout tracking application that helps users track their daily exercise routines. The app features exercise groups, workout completion tracking, user profiles with avatars, and an admin panel for managing exercises.
+
+## Functional Requirements
+
+### Weight Tracking
+- Users can enter weight in **kilograms (kg)**
+- Weight should be stored as a decimal number (e.g., 75.5 kg)
+- Display weight with one decimal place (e.g., "75.5 kg")
+- Weight input should accept values between 30-300 kg (validation)
+- Weight can be tracked per workout session or as a daily measurement
+
+### Exercise Tracking
+- Users can mark exercises as completed for a specific date
+- Each exercise can only be marked as completed once per day
+- Completed exercises are tracked in the `workouts` table with `user_id`, `exercise_id`, and `completed_at` (DATE)
+- Users can see their completion history
+
+### User Profile
+- Users can set first name, last name, and avatar image
+- Avatar images are stored in Supabase Storage bucket `avatars`
+- Maximum avatar file size: 5MB
+- Supported image formats: All image types (validated with `file.type.startsWith('image/')`)
+
+### Exercise Groups
+- Exercises are organized into groups (e.g., "Rygg", "Ben")
+- Each exercise belongs to one exercise group via `exercise_group_id`
+- Groups can be active or inactive
+- Only active groups and exercises are shown in the Dashboard
+
+### Admin Features
+- Admin users can create, edit, and delete exercise groups
+- Admin users can create, edit, and delete exercises
+- Admin users can reorder exercises within a group
+- Admin users can toggle active/inactive status for groups and exercises
+
+### Additional Requirements
+- [Add more functional requirements here as needed]
+- Example: "Users should be able to set workout reminders"
+- Example: "Exercise descriptions should support markdown formatting"
+- Example: "Workout history should show last 30 days"
+
+## Tech Stack
+- **React 18+** with functional components only (JavaScript/JSX, not TypeScript)
+- **Vite** as build tool
+- **Supabase** for backend (auth, database, storage)
+- **Supabase Auth UI React** for authentication UI
+- **CSS modules** (co-located CSS files)
+
+## Project Structure
+```
+src/
+├── App.jsx              # Main app component with routing logic
+├── Dashboard.jsx         # Main workout dashboard with exercise groups
+├── Admin.jsx             # Admin panel for managing exercises and groups
+├── UserAdmin.jsx         # User profile management
+├── Sidebar.jsx           # Navigation sidebar
+├── SignUpForm.jsx        # Custom sign-up form
+├── supabaseClient.js    # Supabase client initialization
+├── *.css                 # Co-located CSS files for each component
+└── main.jsx              # App entry point
+```
+
+## Component Patterns
+
+### Always use functional components with default exports:
+```jsx
+export default function Dashboard({ session, isAdmin = false, onShowAdmin, userProfile }) {
+  const [completed, setCompleted] = useState([])
+  // implementation
+}
+```
+
+### Component file naming:
+- Use PascalCase: `Dashboard.jsx`, `UserAdmin.jsx`
+- Co-locate CSS files: `Dashboard.jsx` + `Dashboard.css`
+- Use `.jsx` extension for React components
+
+### Props destructuring with default values:
+```jsx
+export default function Component({ 
+  session, 
+  isAdmin = false, 
+  onNavigate,
+  userProfile = null 
+}) {
+  // implementation
+}
+```
+
+## Supabase Patterns
+
+### Initialize client in supabaseClient.js:
+```jsx
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Mangler Supabase URL eller Key i .env.local filen')
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+```
+
+### Database Structure:
+- **exercise_groups**: Groups of exercises (e.g., "Rygg", "Ben")
+- **exercises**: Individual exercises with `exercise_group_id` foreign key
+- **workouts**: Completed workouts tracking (user_id, exercise_id, completed_at)
+- **user_profiles**: User profile data (first_name, last_name, avatar_url)
+
+### Optimize Supabase Queries:
+- **Always use JOIN queries** instead of N+1 queries:
+```jsx
+// ✅ Good: Single query with JOIN
+const { data: groups } = await supabase
+  .from('exercise_groups')
+  .select(`
+    *,
+    exercises:exercises!exercise_group_id(*)
+  `)
+  .eq('active', true)
+
+// ❌ Bad: N+1 queries
+groups.map(async (group) => {
+  const { data } = await supabase
+    .from('exercises')
+    .select('*')
+    .eq('exercise_group_id', group.id)
+})
+```
+
+### Error Handling Pattern:
+```jsx
+try {
+  const { data, error } = await supabase
+    .from('table')
+    .select('*')
+  
+  if (error) throw error
+  
+  // Use data
+} catch (error) {
+  console.error('Feil ved henting:', error.message)
+  // Show user-friendly error message
+}
+```
+
+### Handle missing records gracefully:
+```jsx
+const { data, error } = await supabase
+  .from('user_profiles')
+  .select('*')
+  .eq('user_id', userId)
+  .single()
+
+if (error?.code === 'PGRST116') {
+  // Record not found - handle gracefully
+  // Create fallback or create new record
+}
+```
+
+## Authentication Patterns
+
+### Use Supabase Auth UI for login:
+```jsx
+import { Auth } from '@supabase/auth-ui-react'
+import { ThemeSupa } from '@supabase/auth-ui-shared'
+
+<Auth
+  supabaseClient={supabase}
+  appearance={{ theme: ThemeSupa }}
+  providers={['email']}
+  view="sign_in"
+/>
+```
+
+### Session Management:
+```jsx
+useEffect(() => {
+  const loadSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    setSession(session)
+    if (session?.user) {
+      fetchUserProfile(session.user.id)
+    }
+  }
+
+  loadSession()
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      setSession(session)
+      if (session?.user) {
+        fetchUserProfile(session.user.id)
+      }
+    }
+  )
+
+  return () => subscription.unsubscribe()
+}, [])
+```
+
+### Password Recovery:
+- Handle `PASSWORD_RECOVERY` event in `onAuthStateChange`
+- Check URL hash for recovery tokens
+- Show password reset form when needed
+
+## Code Style Rules
+
+### Language:
+- **UI text in Norwegian** (Bokmål)
+- **Code comments in Norwegian** when explaining business logic
+- **Variable names in English** (camelCase)
+- **Function names in English** (camelCase)
+
+### Imports order:
+1. React hooks (`useState`, `useEffect`, etc.)
+2. Third-party libraries (`@supabase/*`)
+3. Local components (relative imports)
+4. CSS files (co-located)
+5. Utilities and configs
+
+### State Management:
+- Use `useState` for local component state
+- Lift state up when needed (pass props)
+- Use `useEffect` for side effects and data fetching
+- Clean up subscriptions in `useEffect` return function
+
+### Loading States:
+Always show loading indicators:
+```jsx
+const [loading, setLoading] = useState(true)
+
+if (loading) {
+  return <div>Laster...</div>
+}
+```
+
+### Error Messages:
+- Show user-friendly Norwegian error messages
+- Log technical errors to console
+- Use try-catch for async operations
+
+### Early Returns:
+```jsx
+function Component({ session }) {
+  if (!session) return <LoginPrompt />
+  if (loading) return <LoadingSpinner />
+  
+  return <MainContent />
+}
+```
+
+## Performance Best Practices
+
+### Optimize Database Queries:
+- Use JOIN queries instead of multiple separate queries
+- Fetch only needed data (use `.select()` with specific fields)
+- Use `.single()` when expecting one result
+- Filter inactive records with `.eq('active', true)`
+
+### Component Optimization:
+- Use `isMounted` flag in `useEffect` to prevent state updates after unmount
+- Clean up async operations in `useEffect` return
+- Use `Promise.all()` for parallel data fetching
+
+### Example of optimized data fetching:
+```jsx
+useEffect(() => {
+  let isMounted = true
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      await Promise.all([
+        fetchExerciseGroups(),
+        fetchTodaysWorkouts()
+      ])
+    } catch (error) {
+      console.error('Feil ved lasting av data:', error.message)
+    } finally {
+      if (isMounted) {
+        setLoading(false)
+      }
+    }
+  }
+
+  loadData()
+
+  return () => {
+    isMounted = false
+  }
+}, [])
+```
+
+## File Storage (Supabase Storage)
+
+### Avatar Upload Pattern:
+```jsx
+// Upload file
+const { data: uploadData, error: uploadError } = await supabase.storage
+  .from('avatars')
+  .upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false
+  })
+
+// Get public URL
+const { data: { publicUrl } } = supabase.storage
+  .from('avatars')
+  .getPublicUrl(filePath)
+```
+
+### File Validation:
+- Check file type: `file.type.startsWith('image/')`
+- Check file size: `file.size > 5 * 1024 * 1024` (5MB)
+- Use unique filenames: `${userId}-${Date.now()}.${fileExt}`
+
+## Admin Features
+
+### Admin Check:
+- Currently based on email address in `isAdmin()` function
+- Can be extended to use Supabase roles or admin table
+- Admin has access to Admin panel for managing exercises
+
+### Admin Panel Features:
+- Create/edit/delete exercise groups
+- Create/edit/delete exercises
+- Reorder exercises (move up/down)
+- Toggle active/inactive status
+- Filter by exercise group
+
+## Environment Variables
+- Always prefix with `VITE_` for client-side access
+- Never commit `.env` files - use `.env.example` as template
+- Access via `import.meta.env.VITE_*`
+- Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+## When generating code:
+1. Use JavaScript (JSX), not TypeScript
+2. Use default exports for components
+3. Co-locate CSS files with components
+4. Handle loading and error states
+5. Use Norwegian for UI text and user-facing messages
+6. Optimize Supabase queries (use JOINs, avoid N+1)
+7. Clean up subscriptions and async operations
+8. Use `isMounted` flag in useEffect for async operations
+9. Follow existing patterns in the codebase
+10. Add Norwegian comments for complex business logic
+11. Consider accessibility (aria labels, keyboard nav)
+12. Use semantic HTML elements
+
+## Database Migrations
+- SQL migration files in `supabase/migrations/`
+- Use descriptive names: `0001_initial_schema.sql`
+- Include rollback instructions in comments if needed
+- Test migrations on local Supabase instance first
+
+## Git Workflow
+- Use descriptive branch names (e.g., `BigChangesToExercises`)
+- Commit related changes together
+- Write clear commit messages in Norwegian or English
