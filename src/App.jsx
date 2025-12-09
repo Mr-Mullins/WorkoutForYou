@@ -167,11 +167,8 @@ function App() {
       }
     }
 
-    if (checkRecoveryLink()) {
-      loadSession()
-    } else {
-      loadSession()
-    }
+    // Last session uansett om det er recovery link eller ikke
+    loadSession()
 
     const {
       data: { subscription },
@@ -193,54 +190,46 @@ function App() {
 
   async function fetchUserProfile(userId) {
     try {
+      // Prøv først å hente fra user_profiles tabell
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        // Hvis profil ikke finnes, opprett den
-        if (error.code === 'PGRST116') {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const firstName = user.user_metadata?.first_name || ''
-            const lastName = user.user_metadata?.last_name || ''
-            const avatarUrl = user.user_metadata?.avatar_url || ''
-            
-            // Prøv å opprette profil
-            const { error: insertError } = await supabase
-              .from('user_profiles')
-              .insert({
-                user_id: userId,
-                first_name: firstName,
-                last_name: lastName,
-                avatar_url: avatarUrl
-              })
-
-            if (!insertError) {
-              setUserProfile({ first_name: firstName, last_name: lastName, avatar_url: avatarUrl })
-              return
-            }
-          }
+      if (data) {
+        // Håndter både avatar_url og avatar_URL (små og store bokstaver)
+        const profileData = {
+          ...data,
+          avatar_url: data.avatar_url || data.avatar_URL || ''
         }
-        
-        // Fallback til user_metadata
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          setUserProfile({
-            first_name: user.user_metadata?.first_name || '',
-            last_name: user.user_metadata?.last_name || '',
-            avatar_url: user.user_metadata?.avatar_url || ''
-          })
-        }
+        setUserProfile(profileData)
         return
       }
 
-      if (data) {
-        setUserProfile(data)
-      } else {
-        // Fallback til user_metadata
+      // Hvis profil ikke finnes (PGRST116 = ingen rader funnet), hent fra user_metadata
+      if (error?.code === 'PGRST116') {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const profile = {
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            avatar_url: user.user_metadata?.avatar_url || ''
+          }
+          setUserProfile(profile)
+          
+          // Opprett profil i bakgrunnen (ikke blokker UI)
+          supabase
+            .from('user_profiles')
+            .insert({
+              user_id: userId,
+              ...profile
+            })
+            .catch(err => console.error('Kunne ikke opprette profil:', err))
+        }
+      } else if (error) {
+        // Hvis det er en annen feil, logg den og prøv fallback
+        console.error('Feil ved henting av profil:', error)
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setUserProfile({
@@ -252,14 +241,18 @@ function App() {
       }
     } catch (error) {
       console.error('Feil ved henting av profil:', error)
-      // Fallback til user_metadata
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUserProfile({
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || '',
-          avatar_url: user.user_metadata?.avatar_url || ''
-        })
+      // Fallback til user_metadata ved uventet feil
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUserProfile({
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            avatar_url: user.user_metadata?.avatar_url || ''
+          })
+        }
+      } catch (fallbackError) {
+        console.error('Fallback feilet også:', fallbackError)
       }
     }
   }
