@@ -15,44 +15,44 @@ services:
       - ~/.ssh:/root/.ssh
     command: sleep infinity
 
-  postgres:
-    container_name: workout_postgres
-    image: postgres:16.3
-    ports:
-      - "5432:5432"
-    command: |
-      postgres
-      -c wal_level=logical
-      -c max_wal_senders=10
-      -c max_replication_slots=5
-      -c hot_standby=on
-      -c hot_standby_feedback=on
-    environment:
-      - POSTGRES_DB=root
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  pgadmin:
-    container_name: workout_pgadmin
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@example.com"
-      PGADMIN_DEFAULT_PASSWORD: "root"
-      PGADMIN_SERVER_JSON_FILE: /servers.json
-    ports:
-      - "8080:80"
-    volumes:
-      - "./servers.json:/servers.json"
-    depends_on:
-      - postgres
-
-volumes:
-  postgres_data:
+#  postgres:
+#    container_name: workout_postgres
+#    image: postgres:16.3
+#    ports:
+#      - "5432:5432"
+#    command: |
+#      postgres
+#      -c wal_level=logical
+#      -c max_wal_senders=10
+#      -c max_replication_slots=5
+#      -c hot_standby=on
+#      -c hot_standby_feedback=on
+#    environment:
+#      - POSTGRES_DB=root
+#      - POSTGRES_USER=root
+#      - POSTGRES_PASSWORD=root
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U root"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#
+#  pgadmin:
+#    container_name: workout_pgadmin
+#    image: dpage/pgadmin4
+#    restart: always
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: "admin@example.com"
+#      PGADMIN_DEFAULT_PASSWORD: "root"
+#      PGADMIN_SERVER_JSON_FILE: /servers.json
+#    ports:
+#      - "8080:80"
+#    volumes:
+#      - "./servers.json:/servers.json"
+#    depends_on:
+#      - postgres
+#
+#volumes:
+#  postgres_data:

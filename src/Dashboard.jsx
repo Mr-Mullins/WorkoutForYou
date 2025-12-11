@@ -93,76 +93,37 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
   async function fetchTodaysWorkouts() {
     try {
-<<<<<<< HEAD
-      const user = session.user;
-      const today = new Date().toISOString().split("T")[0]; // Får dagens dato som YYYY-MM-DD
-=======
       const user = session.user
       const today = new Date().toISOString().split('T')[0]
->>>>>>> origin/main
 
       const { data, error } = await supabase
-        .from("workouts")
-        .select("exercise_id")
-        .eq("user_id", user.id)
-        .eq("completed_at", today);
+        .from('workouts')
+        .select('exercise_id')
+        .eq('user_id', user.id)
+        .eq('completed_at', today)
 
-      if (error) throw error;
-
-<<<<<<< HEAD
-      // Lagrer bare ID-ene til øvelsene som er gjort i dag
-=======
       if (error) throw error
       
->>>>>>> origin/main
       if (data) {
-        setCompleted(data.map((row) => row.exercise_id));
+        setCompleted(data.map(row => row.exercise_id))
       }
     } catch (error) {
-<<<<<<< HEAD
-      console.error("Feil ved henting av øvelser:", error.message);
-    } finally {
-      setLoading(false);
-=======
       console.error('Feil ved henting av øvelser:', error.message)
->>>>>>> origin/main
     }
   }
 
   async function toggleExercise(exerciseId) {
-<<<<<<< HEAD
-    // Sjekk om den allerede er gjort
-    const isDone = completed.includes(exerciseId);
-
-    if (isDone) {
-      // Vi fjerner den ikke fra databasen i denne enkle versjonen (valgfritt),
-      // men vi kan oppdatere visningen lokalt om du vil.
-      // For nå, la oss bare si at gjort er gjort!
-      alert("Allerede registrert i dag! Bra jobba.");
-      return;
-=======
     const isDone = completed.includes(exerciseId)
 
     if (isDone) {
       alert("Allerede registrert i dag! Bra jobba.")
       return
->>>>>>> origin/main
     }
 
     try {
-      const user = session.user;
-      const today = new Date().toISOString().split("T")[0];
+      const user = session.user
+      const today = new Date().toISOString().split('T')[0]
 
-<<<<<<< HEAD
-      // HER var sannsynligvis feilen din sist (manglende komma i objektet under)
-      const { error } = await supabase.from("workouts").insert([
-        {
-          user_id: user.id,
-          exercise_id: exerciseId,
-          completed_at: today,
-        },
-      ]);
-=======
       const { error } = await supabase
         .from('workouts')
         .insert([
@@ -172,92 +133,16 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             completed_at: today
           }
         ])
->>>>>>> origin/main
 
-      if (error) throw error;
+      if (error) throw error
 
-<<<<<<< HEAD
-      // Oppdater listen lokalt så knappen blir grønn med en gang
-      setCompleted([...completed, exerciseId]);
-=======
       setCompleted([...completed, exerciseId])
 
->>>>>>> origin/main
     } catch (error) {
-      alert(`Klarte ikke lagre: ${error.message}`);
+      alert('Klarte ikke lagre: ' + error.message)
     }
   }
 
-<<<<<<< HEAD
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-  }
-
-  if (loading)
-    return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
-        Laster dine data...
-      </div>
-    );
-
-  return (
-    <div className="container">
-      <header
-        style={{ textAlign: "center", marginBottom: "30px", marginTop: "20px" }}
-      >
-        <h1>Hei, {session.user.email?.split("@")[0]}!</h1>
-        <p className="subtitle">Dagens økt</p>
-        <button onClick={handleSignOut} style={styles.logoutBtn}>
-          Logg ut
-        </button>
-      </header>
-
-      <div style={styles.progressContainer}>
-        <div
-          style={{
-            ...styles.progressBar,
-            width: `${(completed.length / 5) * 100}%`,
-          }}
-        ></div>
-      </div>
-      <p
-        style={{
-          textAlign: "center",
-          fontSize: "0.9rem",
-          marginBottom: "20px",
-        }}
-      >
-        {completed.length} av 5 fullført
-      </p>
-
-      {exercises.map((ex) => {
-        const isDone = completed.includes(ex.id);
-        return (
-          <div
-            key={ex.id}
-            style={{ ...styles.card, ...(isDone ? styles.cardDone : {}) }}
-          >
-            <div style={styles.cardHeader}>
-              <span style={styles.exerciseTitle}>{ex.title}</span>
-              {isDone && (
-                <span style={{ color: "#27ae60", fontWeight: "bold" }}>✓</span>
-              )}
-            </div>
-            <div style={styles.details}>{ex.desc}</div>
-            <button
-              onClick={() => toggleExercise(ex.id)}
-              style={{
-                ...styles.actionBtn,
-                ...(isDone ? styles.btnActive : {}),
-              }}
-              disabled={isDone}
-            >
-              {isDone ? "Utført!" : "Marker som utført"}
-            </button>
-          </div>
-        );
-      })}
-=======
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -362,76 +247,6 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
           </div>
         </div>
       )}
->>>>>>> origin/main
     </div>
-  );
+  )
 }
-<<<<<<< HEAD
-
-// Enkel CSS styling inne i filen for å slippe ekstra filer
-const styles = {
-  logoutBtn: {
-    background: "transparent",
-    border: "1px solid #7f8c8d",
-    padding: "5px 10px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginTop: "10px",
-    fontSize: "0.8rem",
-  },
-  progressContainer: {
-    background: "#e0e0e0",
-    borderRadius: "20px",
-    height: "20px",
-    overflow: "hidden",
-    marginBottom: "10px",
-  },
-  progressBar: {
-    background: "#27ae60",
-    height: "100%",
-    transition: "width 0.3s ease",
-  },
-  card: {
-    background: "white",
-    borderRadius: "12px",
-    padding: "20px",
-    marginBottom: "15px",
-    boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
-    border: "1px solid transparent",
-  },
-  cardDone: {
-    background: "#f0fff4",
-    border: "1px solid #27ae60",
-  },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "10px",
-  },
-  exerciseTitle: {
-    fontWeight: "bold",
-    fontSize: "1.1rem",
-  },
-  details: {
-    fontSize: "0.95rem",
-    color: "#555",
-    marginBottom: "15px",
-  },
-  actionBtn: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#ecf0f1",
-    color: "#2c3e50",
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-  btnActive: {
-    background: "#27ae60",
-    color: "white",
-  },
-};
-=======
->>>>>>> origin/main
