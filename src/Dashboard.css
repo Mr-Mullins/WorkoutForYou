@@ -1,186 +1,329 @@
-.dashboard {
-  min-height: 100vh;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+/* Dashboard Container */
+.dashboard-container {
+  box-sizing: border-box;
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: rgba(255, 255, 255, 0.87);
-}
-
-.logout-btn {
-  padding: 0.6em 1.2em;
-  font-size: 0.9em;
-  background-color: #646cff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.25s;
-}
-
-.logout-btn:hover {
-  background-color: #535bf2;
+.dashboard-content {
+  box-sizing: border-box;
 }
 
 .dashboard-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  font-size: 1.5rem;
-}
-
-.exercises-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.exercise-card {
-  background-color: #1a1a1a;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 2rem;
+  min-height: 50vh;
+  padding: 40px;
   text-align: center;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  font-size: 1.1rem;
+  color: #666;
 }
 
-.exercise-card:hover {
-  border-color: #646cff;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(100, 108, 255, 0.2);
+/* Tabs Container */
+.tabs-container {
+  display: flex;
+  gap: 0;
+  margin: 10px 0 20px 0;
+  padding: 0;
+  border-bottom: 1px solid #b8b5b5;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.tab-button {
+  padding:6px 10px;
+  margin-right: 5px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-bottom: 1px solid transparent;
+  color: #502c2d;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  bottom: -2px;
+  border-radius: 12px 12px 0 0;
+  min-width: 120px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button:last-child {
+  margin-right: 0;
+}
+
+.tab-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.tab-button.active {
+  background: #ffffff;
+  border-bottom-width: 1px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.tab-button.active .tab-counter {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.tab-button.completed {
+  background: #f0fff4;
+  color: #27ae60;
+  border-color: #27ae60;
+}
+
+.tab-button.completed:hover {
+  background: #e8f5e9;
+  border-color: #229954;
+  color: #229954;
+}
+
+.tab-button.completed.active {
+  background: #ffffff;
+  color: #27ae60;
+  border-color: #27ae60;
+  border-bottom-color: #27ae60;
+}
+
+.tab-button.completed .tab-counter {
+  color: #27ae60;
+  opacity: 1;
+}
+
+.tab-name {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tab-counter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: -0.5px;
+  margin-left: 4px;
+}
+
+/* Exercises Wrapper */
+.exercises-wrapper {
+  margin: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;      
+  flex-direction: column;
+  align-items: stretch;
+  border:solid 0px #b0afaf;
+  /* border: 1px solid #b0afaf; */
+
+}
+
+/* Exercise Card */
+.exercise-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 0 15px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #b0afaf;
+  box-sizing: border-box;
+  width: 100%;
+  Max-width: 600px;
+  margin: 0 auto 15px auto;  /* Endre margin for å sentrere */
 }
 
 .exercise-card.completed {
-  border-color: #4caf50;
-  background-color: rgba(76, 175, 80, 0.1);
+  background: #f0fff4;
+  border: 1px solid #27ae60;
 }
 
-.exercise-icon {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 0.5rem;
-  color: #646cff;
+.exercise-card-content {
   display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.exercise-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-card-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 10px;
 }
 
-.exercise-card.completed .exercise-icon {
-  color: #4caf50;
+.exercise-card-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
 }
 
-.exercise-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.exercise-name {
+.exercise-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #2c3e50;
   margin: 0;
-  font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.87);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  flex: 1;
 }
 
-.exercise-btn {
-  padding: 0.8em 1.5em;
-  font-size: 1em;
-  font-weight: 500;
-  background-color: #646cff;
-  color: white;
-  border: none;
+.exercise-checkmark {
+  color: #27ae60;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-left: 10px;
+}
+
+.exercise-description {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0 0 15px 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.exercise-button {
+  width: auto;
+  min-width: 100px;
+  padding: 10px 20px;
   border-radius: 8px;
+  border: none;
+  background: #ecf0f1;
+  color: #2c3e50;
+  font-weight: bold;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.25s;
-  width: 100%;
-  max-width: 200px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  white-space: nowrap;
+  position: relative;  /* Legg til denne linjen for tooltip posisjonering */
+
 }
 
-.exercise-btn:hover:not(:disabled) {
-  background-color: #535bf2;
-  transform: scale(1.05);
+/* Tooltip - vises over knappen */
+.exercise-button::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: #2c3e50;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  margin-bottom: 8px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.exercise-btn:disabled {
-  background-color: #4caf50;
+.exercise-button:hover::before {
+  opacity: 1;
+}
+
+/* Pil under tooltip */
+/* .exercise-button::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #2c5037;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  margin-bottom: 2px;
+  z-index: 1000;
+}
+ */
+.exercise-button:hover::after {
+  opacity: 1;
+}
+
+.exercise-button:hover:not(:disabled) {
+  background: #dbdad5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-button.completed {
+  background: #27ae60;
+  color: white;
+  cursor: default;
+}
+
+.exercise-button:disabled {
   cursor: not-allowed;
-  opacity: 0.8;
 }
 
-.exercise-btn.completed {
-  background-color: #4caf50;
+
+.no-exercises {
+  text-align: center;
+  color: #999999;
+  padding: 40px 20px;
+  font-size: 1rem;
 }
 
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 2rem;
-}
-
-@media (prefers-color-scheme: light) {
-  .dashboard {
-    background-color: #ffffff;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding-top: 80px;
   }
 
-  .dashboard-header {
-    border-bottom-color: rgba(0, 0, 0, 0.1);
+  .tabs-container {
+    margin-top: 10px;
+    margin-bottom: 15px;
   }
 
-  .dashboard-header h1 {
-    color: #213547;
+  .tab-button {
+    margin-right: 20px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-width: 100px;
   }
 
   .exercise-card {
-    background-color: #f9f9f9;
-    border-color: rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 8px;
   }
 
-  .exercise-card:hover {
-    border-color: #646cff;
-  }
-
-  .exercise-card.completed {
-    border-color: #4caf50;
-    background-color: rgba(76, 175, 80, 0.1);
-  }
-
-  .exercise-name {
-    color: #213547;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 1rem;
-  }
-
-  .dashboard-header {
+  .exercise-card-content {
     flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+    gap: 15px;
   }
 
-  .exercises-container {
-    grid-template-columns: 1fr;
+  .exercise-card-action {
+    width: 100%;
+  }
+
+  .exercise-button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .exercise-title {
+    font-size: 1rem;
+  }
+
+  .exercise-description {
+    font-size: 0.9rem;
   }
 }
-
