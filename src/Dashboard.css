@@ -124,12 +124,12 @@
 
 /* Exercise Card */
 .exercise-card {
-  background: white;
+  background: #f0f9f0;
   border-radius: 12px;
   padding: 20px;
   margin: 0 0 15px 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #b0afaf;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #c8e6c9;
   box-sizing: border-box;
   width: 100%;
   Max-width: 600px;
@@ -137,14 +137,109 @@
 }
 
 .exercise-card.completed {
-  background: #f0fff4;
-  border: 1px solid #27ae60;
+  background: #f0f9f0;
+  border: 1px solid #81c784;
 }
 
 .exercise-card-content {
   display: flex;
   gap: 20px;
   align-items: flex-start;
+}
+
+.exercise-images-container {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 160px;
+  min-width: 140px;
+}
+
+.exercise-image-thumbnail {
+  width: 100%;
+  height: auto;
+  min-height: 120px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.exercise-image-thumbnail:hover {
+  border-color: #3498db;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.exercise-thumbnail-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Image Modal/Lightbox */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10001;
+}
+
+.image-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.image-modal-img {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .exercise-card-main {
@@ -155,15 +250,9 @@
 .exercise-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.exercise-card-action {
-  flex-shrink: 0;
-  display: flex;
   align-items: flex-start;
-  padding-top: 2px;
+  margin-bottom: 10px;
+  position: relative;
 }
 
 .exercise-title {
@@ -175,41 +264,47 @@
   overflow-wrap: break-word;
   white-space: normal;
   flex: 1;
+  text-decoration: none;
+  padding-right: 10px;
 }
 
-.exercise-checkmark {
-  color: #27ae60;
+.exercise-checkmark-icon {
+  color: white;
   font-weight: bold;
-  font-size: 1.2rem;
-  margin-left: 10px;
+  font-size: 1rem;
+  margin-right: 6px;
+  display: inline-block;
 }
 
 .exercise-description {
   font-size: 0.95rem;
   color: #555;
-  margin: 0 0 15px 0;
+  margin: 8px 0 0 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .exercise-button {
   width: auto;
   min-width: 100px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 8px;
   border: none;
   background: #ecf0f1;
   color: #2c3e50;
   font-weight: bold;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
   box-sizing: border-box;
   white-space: nowrap;
-  position: relative;  /* Legg til denne linjen for tooltip posisjonering */
-
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Tooltip - vises over knappen */
@@ -264,7 +359,7 @@
 }
 
 .exercise-button.completed {
-  background: #27ae60;
+  background: #4caf50;
   color: white;
   cursor: default;
 }
@@ -310,8 +405,20 @@
     gap: 15px;
   }
 
-  .exercise-card-action {
-    width: 100%;
+  .exercise-images-container {
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  .exercise-image-thumbnail {
+    width: 70px;
+    height: 70px;
+  }
+
+  .exercise-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .exercise-button {
