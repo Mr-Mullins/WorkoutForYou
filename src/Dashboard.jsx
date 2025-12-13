@@ -7,6 +7,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   const [exerciseGroups, setExerciseGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
+  const [selectedImage, setSelectedImage] = useState(null)
 
   useEffect(() => {
     let isMounted = true
@@ -31,16 +32,38 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
     }
   }, [])
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && selectedImage) {
+        setSelectedImage(null)
+      }
+    }
+
+    if (selectedImage) {
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [selectedImage])
+
   async function fetchExerciseGroups() {
     try {
-      // Optimalisert: Hent alle grupper med øvelser i ett enkelt kall ved hjelp av JOIN
+      // Optimalisert: Hent alle grupper med øvelser og bilder i ett enkelt kall ved hjelp av JOIN
       const { data: groups, error: groupsError } = await supabase
         .from('exercise_groups')
         .select(`
           *,
           exercises:exercises!exercise_group_id(
             *,
-            active
+            active,
+            exercise_images(
+              image_url,
+              order
+            )
           )
         `)
         .eq('active', true)
@@ -49,12 +72,16 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       if (groupsError) throw groupsError
 
       if (groups && groups.length > 0) {
-        // Filtrer og sorter øvelser for hver gruppe
+        // Filtrer og sorter øvelser for hver gruppe, og sorter bilder
         const groupsWithExercises = groups.map(group => ({
           ...group,
           exercises: (group.exercises || [])
             .filter(ex => ex.active)
             .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map(ex => ({
+              ...ex,
+              exercise_images: (ex.exercise_images || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+            }))
         }))
 
         setExerciseGroups(groupsWithExercises)
@@ -65,7 +92,13 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
         // Fallback: Hent alle aktive øvelser hvis ingen grupper finnes
         const { data: exercises, error } = await supabase
           .from('exercises')
-          .select('*')
+          .select(`
+            *,
+            exercise_images(
+              image_url,
+              order
+            )
+          `)
           .eq('active', true)
           .order('order', { ascending: true })
 
@@ -76,7 +109,10 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             id: 0,
             name: 'Alle øvelser',
             description: '',
-            exercises: exercises
+            exercises: exercises.map(ex => ({
+              ...ex,
+              exercise_images: (ex.exercise_images || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+            }))
           }
           setExerciseGroups([fallbackGroup])
           if (selectedGroupId === null) {
@@ -217,25 +253,43 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             {groupExercises.length > 0 ? (
               groupExercises.map(ex => {
                 const isDone = completed.includes(ex.id)
+                const images = ex.exercise_images && ex.exercise_images.length > 0 
+                  ? ex.exercise_images.map(img => img.image_url)
+                  : []
                 return (
                   <div key={ex.id} className={`exercise-card ${isDone ? 'completed' : ''}`}>
                     <div className="exercise-card-content">
+                      {images.length > 0 && (
+                        <div className="exercise-images-container">
+                          {images.map((imageUrl, index) => (
+                            <div 
+                              key={index}
+                              className="exercise-image-thumbnail"
+                              onClick={() => setSelectedImage(imageUrl)}
+                            >
+                              <img 
+                                src={imageUrl} 
+                                alt={`${ex.title} - Bilde ${index + 1}`}
+                                className="exercise-thumbnail-img"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="exercise-card-main">
                         <div className="exercise-card-header">
                           <h3 className="exercise-title">{ex.title}</h3>
-                          {isDone && <span className="exercise-checkmark">✓</span>}
+                          <button 
+                            className={`exercise-button ${isDone ? 'completed' : ''}`}
+                            onClick={() => toggleExercise(ex.id)}
+                            disabled={isDone}
+                            data-tooltip={isDone ? "Øvelsen er allerede utført i dag" : "Klikk for å markere øvelsen som utført"}
+                          >
+                            {isDone && <span className="exercise-checkmark-icon">✓</span>}
+                            {isDone ? 'Utført!' : 'Marker som utført'}
+                          </button>
                         </div>
                         <p className="exercise-description">{ex.description || ex.desc}</p>
-                      </div>
-                      <div className="exercise-card-action">
-                        <button 
-                          className={`exercise-button ${isDone ? 'completed' : ''}`}
-                          onClick={() => toggleExercise(ex.id)}
-                          disabled={isDone}
-                          data-tooltip={isDone ? "Øvelsen er allerede utført i dag" : "Klikk for å markere øvelsen som utført"}
-                        >
-                          {isDone ? 'Utført!' : 'Marker som utført'}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -245,6 +299,29 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
               <p className="no-exercises">Ingen øvelser i denne gruppen</p>
             )}
           </div>
+
+          {/* Image Modal/Lightbox */}
+          {selectedImage && (
+            <div 
+              className="image-modal-overlay"
+              onClick={() => setSelectedImage(null)}
+            >
+              <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  className="image-modal-close"
+                  onClick={() => setSelectedImage(null)}
+                  aria-label="Lukk bilde"
+                >
+                  ×
+                </button>
+                <img 
+                  src={selectedImage} 
+                  alt="Stort bilde"
+                  className="image-modal-img"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

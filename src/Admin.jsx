@@ -13,6 +13,9 @@ export default function Admin({ session, onBack }) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [showGroupForm, setShowGroupForm] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
+  const [exerciseImages, setExerciseImages] = useState([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [selectedImageService, setSelectedImageService] = useState('midjourney')
 
   useEffect(() => {
     fetchExerciseGroups()
@@ -135,6 +138,8 @@ export default function Admin({ session, onBack }) {
         return
       }
 
+      let savedExerciseId = editingId
+
       if (editingId) {
         // Oppdater eksisterende øvelse
         const { error } = await supabase
@@ -152,7 +157,7 @@ export default function Admin({ session, onBack }) {
         if (error) throw error
       } else {
         // Opprett ny øvelse
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('exercises')
           .insert([
             {
@@ -163,12 +168,23 @@ export default function Admin({ session, onBack }) {
               exercise_group_id: formData.exercise_group_id || selectedGroupId
             }
           ])
+          .select()
+          .single()
 
         if (error) throw error
+        if (data) {
+          savedExerciseId = data.id
+        }
+      }
+
+      // Save exercise images
+      if (savedExerciseId && exerciseImages.length > 0) {
+        await saveExerciseImages(savedExerciseId)
       }
 
       // Nullstill form og oppdater liste
       setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
+      setExerciseImages([])
       setEditingId(null)
       setShowAddForm(false)
       fetchExercises()
@@ -177,7 +193,55 @@ export default function Admin({ session, onBack }) {
     }
   }
 
-  function handleEdit(exercise) {
+  async function saveExerciseImages(exerciseId) {
+    try {
+      // Delete existing images first if editing
+      if (editingId) {
+        const { data: existingImages } = await supabase
+          .from('exercise_images')
+          .select('*')
+          .eq('exercise_id', exerciseId)
+
+        if (existingImages && existingImages.length > 0) {
+          // Delete images from storage
+          const filesToDelete = existingImages.map(img => {
+            const urlParts = img.image_url.split('/')
+            return urlParts[urlParts.length - 1].split('?')[0]
+          })
+
+          await supabase.storage
+            .from('exercise-images')
+            .remove(filesToDelete)
+
+          // Delete from database
+          await supabase
+            .from('exercise_images')
+            .delete()
+            .eq('exercise_id', exerciseId)
+        }
+      }
+
+      // Insert new images
+      if (exerciseImages.length > 0) {
+        const imagesToInsert = exerciseImages.map((imgUrl, index) => ({
+          exercise_id: exerciseId,
+          image_url: imgUrl,
+          order: index
+        }))
+
+        const { error } = await supabase
+          .from('exercise_images')
+          .insert(imagesToInsert)
+
+        if (error) throw error
+      }
+    } catch (error) {
+      console.error('Error saving exercise images:', error)
+      throw error
+    }
+  }
+
+  async function handleEdit(exercise) {
     setFormData({
       title: exercise.title,
       description: exercise.description,
@@ -187,6 +251,26 @@ export default function Admin({ session, onBack }) {
     })
     setEditingId(exercise.id)
     setShowAddForm(true)
+    
+    // Fetch existing images
+    try {
+      const { data: images, error } = await supabase
+        .from('exercise_images')
+        .select('*')
+        .eq('exercise_id', exercise.id)
+        .order('order', { ascending: true })
+
+      if (error) throw error
+      
+      if (images && images.length > 0) {
+        setExerciseImages(images.map(img => img.image_url))
+      } else {
+        setExerciseImages([])
+      }
+    } catch (error) {
+      console.error('Error fetching exercise images:', error)
+      setExerciseImages([])
+    }
   }
 
   function handleEditGroup(group) {
@@ -202,8 +286,125 @@ export default function Admin({ session, onBack }) {
 
   function handleCancel() {
     setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
+    setExerciseImages([])
     setEditingId(null)
     setShowAddForm(false)
+    setSelectedImageService('midjourney')
+  }
+
+  async function handleImageUpload(event) {
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
+
+    // Check total images won't exceed 5
+    if (exerciseImages.length + files.length > 5) {
+      alert('Maksimum 5 bilder per øvelse. Du har allerede ' + exerciseImages.length + ' bilder.')
+      return
+    }
+
+    // Validate files
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        alert('Kun bildefiler er tillatt')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Bildet er for stort. Maks størrelse er 5MB')
+        return
+      }
+    }
+
+    setUploadingImages(true)
+
+    try {
+      const uploadedUrls = []
+
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop()
+        const timestamp = Date.now()
+        const randomId = Math.random().toString(36).substring(7)
+        const fileName = `exercise-${timestamp}-${randomId}.${fileExt}`
+        const filePath = fileName
+
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('exercise-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          throw new Error(`Kunne ikke laste opp bilde: ${uploadError.message}`)
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('exercise-images')
+          .getPublicUrl(filePath)
+
+        if (!publicUrl) {
+          throw new Error('Kunne ikke hente URL for opplastet bilde')
+        }
+
+        uploadedUrls.push(publicUrl)
+      }
+
+      // Add to state
+      setExerciseImages([...exerciseImages, ...uploadedUrls])
+      
+      // Reset file input
+      event.target.value = ''
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Feil ved opplasting av bilder: ' + (error.message || 'Ukjent feil'))
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
+  function handleRemoveImage(index) {
+    const newImages = exerciseImages.filter((_, i) => i !== index)
+    setExerciseImages(newImages)
+  }
+
+  function generateImageSearchURL(exerciseTitle, exerciseDescription, service) {
+    // Definer prompt-maler for hver tjeneste
+    const servicePrompts = {
+      midjourney: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Midjourney AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
+      dalle: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. DALL-E AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
+      stableDiffusion: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Stable Diffusion AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
+      leonardo: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Leonardo.ai AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
+      generic: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. AI-generert tegning. Stilistisk illustrasjon. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder."
+    }
+    
+    // Velg riktig prompt-mal basert på tjeneste
+    const promptTemplate = servicePrompts[service] || servicePrompts.generic
+    
+    // Erstatt plassholdere med faktiske verdier
+    const fullPrompt = promptTemplate
+      .replace('[TITTEL]', exerciseTitle || '')
+      .replace('[BESKRIVELSE]', exerciseDescription || '')
+    
+    // URL-kode den fullstendige strengen
+    const encodedPrompt = encodeURIComponent(fullPrompt)
+    
+    // Generer URL
+    const baseURL = "https://www.google.com/search?tbm=isch&q="
+    const finalURL = baseURL + encodedPrompt
+    
+    return finalURL
+  }
+
+  function handleGenerateImageSearch() {
+    if (!formData.title || !formData.description) {
+      alert('Du må fylle ut både tittel og beskrivelse for å generere bildesøk')
+      return
+    }
+    
+    const url = generateImageSearchURL(formData.title, formData.description, selectedImageService)
+    window.open(url, '_blank')
   }
 
   function handleCancelGroup() {
@@ -348,7 +549,9 @@ export default function Admin({ session, onBack }) {
         <button 
           onClick={() => {
             setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
+            setExerciseImages([])
             setEditingId(null)
+            setSelectedImageService('midjourney')
             setShowAddForm(!showAddForm)
           }}
           className="add-btn"
@@ -533,6 +736,132 @@ export default function Admin({ session, onBack }) {
               />
               Aktiv (vis i Dashboard)
             </label>
+          </div>
+          <div className="form-group">
+            <label>Bilder (maks 5):</label>
+            <div style={{ marginTop: '10px' }}>
+              {exerciseImages.length > 0 && (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  {exerciseImages.map((imgUrl, index) => (
+                    <div key={index} style={{ position: 'relative', display: 'inline-block' }}>
+                      <img
+                        src={imgUrl}
+                        alt={`Bilde ${index + 1}`}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '1px solid #ddd'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          background: '#e74c3c',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          lineHeight: '1',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {exerciseImages.length < 5 && (
+                <label
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 20px',
+                    background: '#f0f0f0',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    cursor: uploadingImages ? 'wait' : 'pointer',
+                    opacity: uploadingImages ? 0.6 : 1
+                  }}
+                >
+                  {uploadingImages ? 'Laster opp...' : `+ Last opp bilde (${exerciseImages.length}/5)`}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploadingImages}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+              {exerciseImages.length >= 5 && (
+                <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '5px' }}>
+                  Maksimum 5 bilder nådd
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="form-group" style={{ marginTop: '20px', marginBottom: '10px' }}>
+            <label>Velg AI-bildetjeneste:</label>
+            <select
+              value={selectedImageService}
+              onChange={(e) => setSelectedImageService(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '16px',
+                marginBottom: '10px'
+              }}
+            >
+              <option value="midjourney">Midjourney</option>
+              <option value="dalle">DALL-E</option>
+              <option value="stableDiffusion">Stable Diffusion</option>
+              <option value="leonardo">Leonardo.ai</option>
+              <option value="generic">Generisk AI-tegning</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleGenerateImageSearch}
+              disabled={!formData.title || !formData.description}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                background: !formData.title || !formData.description ? '#ccc' : '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: !formData.title || !formData.description ? 'not-allowed' : 'pointer',
+                opacity: !formData.title || !formData.description ? 0.6 : 1,
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (formData.title && formData.description) {
+                  e.target.style.background = '#2980b9'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (formData.title && formData.description) {
+                  e.target.style.background = '#3498db'
+                }
+              }}
+            >
+              Generer illustrasjon for øvelsen
+            </button>
           </div>
           <div className="form-actions">
             <button onClick={handleSave} className="save-btn">
