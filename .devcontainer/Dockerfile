@@ -1,4 +1,4 @@
-FROM node:25.1.0-slim AS base
+FROM docker.io/library/node:25.1.0-slim AS base
 
 WORKDIR /app
 
