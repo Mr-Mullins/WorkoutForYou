@@ -8,7 +8,7 @@ export default function Admin({ session, onBack }) {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState(null)
   const [editingGroupId, setEditingGroupId] = useState(null)
-  const [formData, setFormData] = useState({ title: '', description: '', order: 0, active: true, exercise_group_id: null })
+  const [formData, setFormData] = useState({ title: '', description: '', order: 0, active: true, exercise_group_id: null, sets: 1, reps: null, weight_unit: 'kropp' })
   const [groupFormData, setGroupFormData] = useState({ name: '', description: '', order: 0, active: true })
   const [showAddForm, setShowAddForm] = useState(false)
   const [showGroupForm, setShowGroupForm] = useState(false)
@@ -150,6 +150,9 @@ export default function Admin({ session, onBack }) {
             order: parseInt(formData.order),
             active: formData.active,
             exercise_group_id: formData.exercise_group_id,
+            sets: formData.sets ? parseInt(formData.sets) : 1,
+            reps: formData.reps ? parseInt(formData.reps) : null,
+            weight_unit: formData.weight_unit || 'kropp',
             updated_at: new Date().toISOString()
           })
           .eq('id', editingId)
@@ -165,7 +168,10 @@ export default function Admin({ session, onBack }) {
               description: formData.description,
               order: parseInt(formData.order),
               active: formData.active,
-              exercise_group_id: formData.exercise_group_id || selectedGroupId
+              exercise_group_id: formData.exercise_group_id || selectedGroupId,
+              sets: formData.sets ? parseInt(formData.sets) : 1,
+              reps: formData.reps ? parseInt(formData.reps) : null,
+              weight_unit: formData.weight_unit || 'kropp'
             }
           ])
           .select()
@@ -183,7 +189,7 @@ export default function Admin({ session, onBack }) {
       }
 
       // Nullstill form og oppdater liste
-      setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
+      setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId, sets: 1, reps: null, weight_unit: 'kropp' })
       setExerciseImages([])
       setEditingId(null)
       setShowAddForm(false)
@@ -247,7 +253,10 @@ export default function Admin({ session, onBack }) {
       description: exercise.description,
       order: exercise.order,
       active: exercise.active,
-      exercise_group_id: exercise.exercise_group_id || selectedGroupId
+      exercise_group_id: exercise.exercise_group_id || selectedGroupId,
+      sets: exercise.sets || 1,
+      reps: exercise.reps || null,
+      weight_unit: exercise.weight_unit || 'kropp'
     })
     setEditingId(exercise.id)
     setShowAddForm(true)
@@ -285,7 +294,7 @@ export default function Admin({ session, onBack }) {
   }
 
   function handleCancel() {
-    setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
+    setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId, sets: 1, reps: null, weight_unit: 'kropp' })
     setExerciseImages([])
     setEditingId(null)
     setShowAddForm(false)
@@ -726,6 +735,42 @@ export default function Admin({ session, onBack }) {
               onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
               min="1"
             />
+          </div>
+          <div className="form-group">
+            <label>Antall sets:</label>
+            <input
+              type="number"
+              value={formData.sets || 1}
+              onChange={(e) => setFormData({ ...formData, sets: parseInt(e.target.value) || 1 })}
+              min="1"
+            />
+          </div>
+          <div className="form-group">
+            <label>Antall repetisjoner per set:</label>
+            <input
+              type="number"
+              value={formData.reps || ''}
+              onChange={(e) => setFormData({ ...formData, reps: e.target.value ? parseInt(e.target.value) : null })}
+              min="1"
+              placeholder="F.eks. 10"
+            />
+          </div>
+          <div className="form-group">
+            <label>Vektenhet:</label>
+            <select
+              value={formData.weight_unit || 'kropp'}
+              onChange={(e) => setFormData({ ...formData, weight_unit: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '16px'
+              }}
+            >
+              <option value="kropp">Kropp</option>
+              <option value="kg">Kilogram (kg)</option>
+            </select>
           </div>
           <div className="form-group">
             <label>
