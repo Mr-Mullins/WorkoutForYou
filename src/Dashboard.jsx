@@ -11,6 +11,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   const [workoutModal, setWorkoutModal] = useState(null) // { exercise: {...}, lastWorkoutWeights: [...] }
   const [workoutWeights, setWorkoutWeights] = useState({}) // { setNumber: weight }
   const [exerciseLastWeights, setExerciseLastWeights] = useState({}) // { exerciseId: [workout_sets] }
+  const [exerciseTodayWeights, setExerciseTodayWeights] = useState({}) // { exerciseId: [workout_sets] }
 
   useEffect(() => {
     let isMounted = true
@@ -145,7 +146,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
       const { data, error } = await supabase
         .from('workouts')
-        .select('exercise_id')
+        .select('id, exercise_id')
         .eq('user_id', user.id)
         .eq('completed_at', today)
 
@@ -153,6 +154,31 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       
       if (data) {
         setCompleted(data.map(row => row.exercise_id))
+        
+        // Hent vektdata for dagens workouts
+        if (data.length > 0) {
+          const workoutIds = data.map(w => w.id)
+          const { data: todaySets, error: setsError } = await supabase
+            .from('workout_sets')
+            .select('set_number, weight, workout_id')
+            .in('workout_id', workoutIds)
+            .order('set_number', { ascending: true })
+
+          if (!setsError && todaySets) {
+            // Organiser sets per exercise_id
+            const weightsByExercise = {}
+            data.forEach(workout => {
+              const setsForWorkout = todaySets.filter(s => s.workout_id === workout.id)
+              if (setsForWorkout.length > 0) {
+                weightsByExercise[workout.exercise_id] = setsForWorkout.map(s => ({
+                  set_number: s.set_number,
+                  weight: s.weight
+                }))
+              }
+            })
+            setExerciseTodayWeights(weightsByExercise)
+          }
+        }
       }
     } catch (error) {
       console.error('Feil ved henting av øvelser:', error.message)
@@ -356,7 +382,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       setWorkoutModal(null)
       setWorkoutWeights({})
       
-      // Oppdater vektdata for denne øvelsen i state
+      // Oppdater vektdata for denne øvelsen i state (dagens vekt)
       if (setsData && Object.keys(setsData).length > 0) {
         const newWeights = Object.entries(setsData)
           .filter(([setNum, weight]) => weight !== '' && weight !== null)
@@ -365,7 +391,8 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             weight: parseFloat(weight)
           }))
         
-        setExerciseLastWeights(prev => ({
+        // Oppdater dagens vekt
+        setExerciseTodayWeights(prev => ({
           ...prev,
           [exerciseId]: newWeights
         }))
@@ -504,14 +531,14 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                           </button>
                         </div>
                         <p className="exercise-description">{ex.description || ex.desc}</p>
-                        {ex.weight_unit === 'kg' && lastWeights.length > 0 && (
+                        {ex.weight_unit === 'kg' && weightsToShow.length > 0 && (
                           <div className="exercise-last-weights">
-                            <span className="last-weights-label">Forrige gang:</span>
+                            <span className="last-weights-label">{weightsLabel}</span>
                             <span className="last-weights-values">
-                              {lastWeights.map((set, index) => (
+                              {weightsToShow.map((set, index) => (
                                 <span key={index} className="last-weight-item">
                                   Set {set.set_number}: {set.weight} kg
-                                  {index < lastWeights.length - 1 && ', '}
+                                  {index < weightsToShow.length - 1 && ', '}
                                 </span>
                               ))}
                             </span>
