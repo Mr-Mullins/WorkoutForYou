@@ -8,6 +8,9 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   const [loading, setLoading] = useState(true)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [selectedImage, setSelectedImage] = useState(null)
+  const [workoutModal, setWorkoutModal] = useState(null) // { exercise: {...}, lastWorkoutWeights: [...] }
+  const [workoutWeights, setWorkoutWeights] = useState({}) // { setNumber: weight }
+  const [exerciseLastWeights, setExerciseLastWeights] = useState({}) // { exerciseId: [workout_sets] }
 
   useEffect(() => {
     let isMounted = true
@@ -49,6 +52,14 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       document.body.style.overflow = 'unset'
     }
   }, [selectedImage])
+
+  // Hent vektdata når exerciseGroups er lastet
+  useEffect(() => {
+    if (exerciseGroups.length > 0 && !loading && session?.user) {
+      fetchAllLastWeights()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exerciseGroups.length, loading])
 
   async function fetchExerciseGroups() {
     try {
@@ -148,19 +159,167 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
     }
   }
 
-  async function toggleExercise(exerciseId) {
-    const isDone = completed.includes(exerciseId)
-
+  async function toggleExercise(exercise) {
+    const isDone = completed.includes(exercise.id)
+    
     if (isDone) {
       alert("Allerede registrert i dag! Bra jobba.")
       return
     }
 
+    // Hent vekt fra forrige gang hvis øvelsen bruker kg
+    let lastWorkoutWeights = []
+    if (exercise.weight_unit === 'kg') {
+      lastWorkoutWeights = await fetchLastWorkoutWeights(exercise.id)
+    }
+
+    // Åpne modal
+    setWorkoutModal({ exercise, lastWorkoutWeights })
+    
+    // Initialiser vekt-array med tomme verdier eller verdier fra forrige gang
+    const initialWeights = {}
+    const numSets = exercise.sets || 1
+    for (let i = 1; i <= numSets; i++) {
+      initialWeights[i] = lastWorkoutWeights[i - 1]?.weight || ''
+    }
+    setWorkoutWeights(initialWeights)
+  }
+
+  async function fetchLastWorkoutWeights(exerciseId) {
+    try {
+      const user = session.user
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Hent siste workout for denne øvelsen (ikke i dag)
+      const { data: lastWorkout, error: workoutError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('exercise_id', exerciseId)
+        .neq('completed_at', today)
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (workoutError || !lastWorkout) {
+        return []
+      }
+
+      // Hent workout_sets for denne workout
+      const { data: sets, error: setsError } = await supabase
+        .from('workout_sets')
+        .select('*')
+        .eq('workout_id', lastWorkout.id)
+        .order('set_number', { ascending: true })
+
+      if (setsError) {
+        console.error('Error fetching workout sets:', setsError)
+        return []
+      }
+
+      return sets || []
+    } catch (error) {
+      console.error('Error fetching last workout weights:', error)
+      return []
+    }
+  }
+
+  async function fetchAllLastWeights() {
+    try {
+      const user = session.user
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Hent alle kg-øvelser fra exerciseGroups state
+      const kgExercises = []
+      exerciseGroups.forEach(group => {
+        if (group.exercises) {
+          group.exercises.forEach(ex => {
+            if (ex.weight_unit === 'kg' && ex.active) {
+              kgExercises.push(ex.id)
+            }
+          })
+        }
+      })
+
+      if (kgExercises.length === 0) {
+        return
+      }
+
+      // Hent siste workout for hver kg-øvelse (ikke i dag)
+      // Vi bruker en subquery for å få den siste workout per exercise
+      const { data: lastWorkouts, error: workoutError } = await supabase
+        .from('workouts')
+        .select('id, exercise_id, completed_at')
+        .eq('user_id', user.id)
+        .in('exercise_id', kgExercises)
+        .neq('completed_at', today)
+        .order('completed_at', { ascending: false })
+
+      if (workoutError || !lastWorkouts || lastWorkouts.length === 0) {
+        return
+      }
+
+      // Grupper workouts per exercise_id (ta bare den siste for hver øvelse)
+      const latestWorkoutPerExercise = {}
+      lastWorkouts.forEach(workout => {
+        if (!latestWorkoutPerExercise[workout.exercise_id]) {
+          latestWorkoutPerExercise[workout.exercise_id] = workout.id
+        }
+      })
+
+      // Hent alle workout_sets for disse workouts
+      const workoutIds = Object.values(latestWorkoutPerExercise)
+      if (workoutIds.length === 0) {
+        return
+      }
+
+      const { data: allSets, error: setsError } = await supabase
+        .from('workout_sets')
+        .select('set_number, weight, workout_id')
+        .in('workout_id', workoutIds)
+        .order('set_number', { ascending: true })
+
+      if (setsError) {
+        console.error('Error fetching workout sets:', setsError)
+        return
+      }
+
+      // Organiser sets per exercise_id
+      const weightsByExercise = {}
+      if (allSets) {
+        // Må mappe workout_id tilbake til exercise_id
+        const workoutToExercise = {}
+        Object.entries(latestWorkoutPerExercise).forEach(([exerciseId, workoutId]) => {
+          workoutToExercise[workoutId] = parseInt(exerciseId)
+        })
+
+        allSets.forEach(set => {
+          const exerciseId = workoutToExercise[set.workout_id]
+          if (exerciseId) {
+            if (!weightsByExercise[exerciseId]) {
+              weightsByExercise[exerciseId] = []
+            }
+            weightsByExercise[exerciseId].push({
+              set_number: set.set_number,
+              weight: set.weight
+            })
+          }
+        })
+      }
+
+      setExerciseLastWeights(weightsByExercise)
+    } catch (error) {
+      console.error('Error fetching all last weights:', error)
+    }
+  }
+
+  async function saveWorkoutWithSets(exerciseId, setsData) {
     try {
       const user = session.user
       const today = new Date().toISOString().split('T')[0]
 
-      const { error } = await supabase
+      // Opprett workout
+      const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert([
           { 
@@ -169,14 +328,68 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             completed_at: today
           }
         ])
+        .select()
+        .single()
 
-      if (error) throw error
+      if (workoutError) throw workoutError
+
+      // Hvis øvelsen bruker kg og det er vektdata, lagre workout_sets
+      if (setsData && Object.keys(setsData).length > 0) {
+        const setsToInsert = Object.entries(setsData)
+          .filter(([setNum, weight]) => weight !== '' && weight !== null)
+          .map(([setNum, weight]) => ({
+            workout_id: workout.id,
+            set_number: parseInt(setNum),
+            weight: parseFloat(weight)
+          }))
+
+        if (setsToInsert.length > 0) {
+          const { error: setsError } = await supabase
+            .from('workout_sets')
+            .insert(setsToInsert)
+
+          if (setsError) throw setsError
+        }
+      }
 
       setCompleted([...completed, exerciseId])
-
+      setWorkoutModal(null)
+      setWorkoutWeights({})
+      
+      // Oppdater vektdata for denne øvelsen i state
+      if (setsData && Object.keys(setsData).length > 0) {
+        const newWeights = Object.entries(setsData)
+          .filter(([setNum, weight]) => weight !== '' && weight !== null)
+          .map(([setNum, weight]) => ({
+            set_number: parseInt(setNum),
+            weight: parseFloat(weight)
+          }))
+        
+        setExerciseLastWeights(prev => ({
+          ...prev,
+          [exerciseId]: newWeights
+        }))
+      }
     } catch (error) {
       alert('Klarte ikke lagre: ' + error.message)
     }
+  }
+
+  function handleCloseWorkoutModal() {
+    setWorkoutModal(null)
+    setWorkoutWeights({})
+  }
+
+  function handleCopyLastWeights() {
+    if (!workoutModal?.lastWorkoutWeights || workoutModal.lastWorkoutWeights.length === 0) {
+      return
+    }
+
+    const newWeights = {}
+    workoutModal.lastWorkoutWeights.forEach((set, index) => {
+      newWeights[index + 1] = set.weight || ''
+    })
+    setWorkoutWeights(newWeights)
   }
 
   if (loading) {
@@ -256,6 +469,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                 const images = ex.exercise_images && ex.exercise_images.length > 0 
                   ? ex.exercise_images.map(img => img.image_url)
                   : []
+                const lastWeights = exerciseLastWeights[ex.id] || []
                 return (
                   <div key={ex.id} className={`exercise-card ${isDone ? 'completed' : ''}`}>
                     <div className="exercise-card-content">
@@ -281,7 +495,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                           <h3 className="exercise-title">{ex.title}</h3>
                           <button 
                             className={`exercise-button ${isDone ? 'completed' : ''}`}
-                            onClick={() => toggleExercise(ex.id)}
+                            onClick={() => toggleExercise(ex)}
                             disabled={isDone}
                             data-tooltip={isDone ? "Øvelsen er allerede utført i dag" : "Klikk for å markere øvelsen som utført"}
                           >
@@ -290,6 +504,19 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                           </button>
                         </div>
                         <p className="exercise-description">{ex.description || ex.desc}</p>
+                        {ex.weight_unit === 'kg' && lastWeights.length > 0 && (
+                          <div className="exercise-last-weights">
+                            <span className="last-weights-label">Forrige gang:</span>
+                            <span className="last-weights-values">
+                              {lastWeights.map((set, index) => (
+                                <span key={index} className="last-weight-item">
+                                  Set {set.set_number}: {set.weight} kg
+                                  {index < lastWeights.length - 1 && ', '}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -319,6 +546,83 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                   alt="Stort bilde"
                   className="image-modal-img"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Workout Modal */}
+          {workoutModal && (
+            <div 
+              className="workout-modal-overlay"
+              onClick={handleCloseWorkoutModal}
+            >
+              <div className="workout-modal-content" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  className="workout-modal-close"
+                  onClick={handleCloseWorkoutModal}
+                  aria-label="Lukk"
+                >
+                  ×
+                </button>
+                <h2>Registrer {workoutModal.exercise.title}</h2>
+                
+                {workoutModal.exercise.weight_unit === 'kg' && (
+                  <>
+                    <div className="workout-modal-section">
+                      <h3>Vekt per set</h3>
+                      {Array.from({ length: workoutModal.exercise.sets || 1 }, (_, i) => i + 1).map(setNum => (
+                        <div key={setNum} className="workout-weight-input-group">
+                          <label>Set {setNum} (kg):</label>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={workoutWeights[setNum] || ''}
+                            onChange={(e) => setWorkoutWeights({ ...workoutWeights, [setNum]: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {workoutModal.lastWorkoutWeights && workoutModal.lastWorkoutWeights.length > 0 && (
+                      <div className="workout-modal-section">
+                        <h3>Forrige gang</h3>
+                        <div className="last-workout-weights">
+                          {workoutModal.lastWorkoutWeights.map((set, index) => (
+                            <div key={index} className="last-weight-item">
+                              Set {set.set_number}: {set.weight} kg
+                            </div>
+                          ))}
+                        </div>
+                        <button 
+                          className="copy-weights-btn"
+                          onClick={handleCopyLastWeights}
+                        >
+                          Bruk vekt fra forrige gang
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {workoutModal.exercise.weight_unit === 'kropp' && (
+                  <p className="workout-modal-info">Ingen vektregistrering for denne øvelsen.</p>
+                )}
+
+                <div className="workout-modal-actions">
+                  <button 
+                    className="workout-save-btn"
+                    onClick={() => saveWorkoutWithSets(workoutModal.exercise.id, workoutWeights)}
+                  >
+                    Lagre
+                  </button>
+                  <button 
+                    className="workout-cancel-btn"
+                    onClick={handleCloseWorkoutModal}
+                  >
+                    Avbryt
+                  </button>
+                </div>
               </div>
             </div>
           )}
