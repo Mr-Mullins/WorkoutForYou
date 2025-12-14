@@ -1,18 +1,18 @@
 {
-  "name": "WorkoutForYou",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-azuretools.vscode-docker",
-        "yoavbls.pretty-ts-errors",
-        "GitHub.vscode-github-actions",
-        "bradlc.vscode-tailwindcss",
-        "Anthropic.claude-code"
-      ]
-    }
-  },
-  "dockerComposeFile": "./docker-compose.yml",
-  "service": "local",
-  "workspaceFolder": "/app",
-  "postCreateCommand": "read -p 'Enter your git email: ' email && git config --global user.email \"$email\" && read -p 'Enter your git username: ' username && git config --global user.name \"$username\""
+	"name": "WorkoutForYou",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"yoavbls.pretty-ts-errors",
+				"GitHub.vscode-github-actions",
+				"bradlc.vscode-tailwindcss",
+				"Anthropic.claude-code"
+			]
+		}
+	},
+	"dockerComposeFile": "./docker-compose.yml",
+	"service": "local",
+	"workspaceFolder": "/app",
+	"postCreateCommand": "read -p 'Enter your git email: ' email && git config --global user.email \"$email\" && read -p 'Enter your git username: ' username && git config --global user.name \"$username\""
 }

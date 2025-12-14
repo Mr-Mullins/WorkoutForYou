@@ -5,11 +5,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: local
-    ports:
-      - "4321:4321"
-      - "4000:4000"
-      - "2221:2221"
-      - "6006:6006"
     volumes:
       - ./..:/app
       - ~/.ssh:/root/.ssh
