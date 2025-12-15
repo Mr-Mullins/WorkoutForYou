@@ -73,6 +73,14 @@ export default function Sidebar({ session, isAdmin, currentView, onNavigate, onS
 
         <nav className="sidebar-nav">
           <button
+            className={`nav-item ${currentView === 'oversikt' ? 'active' : ''}`}
+            onClick={() => handleNavigate('oversikt')}
+          >
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Oversikt</span>
+          </button>
+
+          <button
             className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
             onClick={() => handleNavigate('dashboard')}
           >

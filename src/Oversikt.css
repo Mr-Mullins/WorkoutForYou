@@ -1,0 +1,228 @@
+.oversikt-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.oversikt-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  padding: 40px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Greeting Section */
+.greeting-section {
+  text-align: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.greeting-section h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.greeting-subtitle {
+  margin: 10px 0 0 0;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* App Info Section */
+.app-info-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+}
+
+.app-info-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.app-info-section p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stats-section h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #27ae60;
+  line-height: 1;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Activity Chart Section */
+.activity-chart-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+}
+
+.activity-chart-section h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.bar-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 150px;
+  padding: 0 10px;
+  gap: 8px;
+}
+
+.bar-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.bar-wrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar {
+  width: 100%;
+  max-width: 40px;
+  background: linear-gradient(180deg, #27ae60 0%, #2ecc71 100%);
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.bar-value {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.bar-label {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.chart-description {
+  text-align: center;
+  margin: 16px 0 0 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .oversikt-container {
+    padding: 16px;
+  }
+
+  .greeting-section {
+    padding: 24px 16px;
+  }
+
+  .greeting-section h1 {
+    font-size: 1.6rem;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 20px 16px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .bar-chart {
+    height: 120px;
+    gap: 4px;
+  }
+
+  .bar {
+    max-width: 30px;
+  }
+
+  .bar-value {
+    font-size: 0.75rem;
+    top: -20px;
+  }
+
+  .bar-label {
+    font-size: 0.7rem;
+  }
+}
