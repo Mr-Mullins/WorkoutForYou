@@ -14,22 +14,37 @@ CREATE TABLE IF NOT EXISTS exercise_groups (
   description TEXT,
   "order" INTEGER DEFAULT 0,
   active BOOLEAN DEFAULT true,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
--- RLS Policies for exercise_groups
+-- Indeks for raskere spørringer på user_id
+CREATE INDEX IF NOT EXISTS idx_exercise_groups_user_id ON exercise_groups(user_id);
+
+-- RLS Policies for exercise_groups (per bruker)
 ALTER TABLE exercise_groups ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view active exercise groups"
+CREATE POLICY "Users can view own exercise groups"
   ON exercise_groups FOR SELECT
-  USING (active = true);
-
-CREATE POLICY "Authenticated users can manage exercise groups"
-  ON exercise_groups FOR ALL
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own exercise groups"
+  ON exercise_groups FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own exercise groups"
+  ON exercise_groups FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own exercise groups"
+  ON exercise_groups FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
 
 -- ============================================
 -- 2. LEGG TIL EXERCISE_GROUP_ID I EXERCISES

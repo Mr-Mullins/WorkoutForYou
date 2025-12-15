@@ -97,7 +97,8 @@ export default function Admin({ session, onBack }) {
               name: groupFormData.name,
               description: groupFormData.description,
               order: parseInt(groupFormData.order),
-              active: groupFormData.active
+              active: groupFormData.active,
+              user_id: session.user.id
             }
           ])
           .select()
