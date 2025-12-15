@@ -2,6 +2,36 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import './Dashboard.css'
 
+// Hjelpefunksjon for å regenerere ferske public URLs fra Supabase Storage
+function regenerateImageUrl(imageUrl) {
+  if (!imageUrl) return null
+
+  try {
+    // Ekstraher filnavnet fra URLen
+    // URL-format: https://[prosjekt].supabase.co/storage/v1/object/public/exercise-images/[filnavn]
+    // eller med token: ...?token=xxx
+    const urlWithoutParams = imageUrl.split('?')[0]
+    const parts = urlWithoutParams.split('/exercise-images/')
+
+    if (parts.length < 2) {
+      // Hvis URLen ikke matcher forventet format, returner original
+      return imageUrl
+    }
+
+    const fileName = parts[1]
+
+    // Generer fersk public URL
+    const { data } = supabase.storage
+      .from('exercise-images')
+      .getPublicUrl(fileName)
+
+    return data?.publicUrl || imageUrl
+  } catch (error) {
+    console.error('Feil ved regenerering av bilde-URL:', error)
+    return imageUrl
+  }
+}
+
 export default function Dashboard({ session, isAdmin = false, onShowAdmin, userProfile }) {
   const [completed, setCompleted] = useState([])
   const [exerciseGroups, setExerciseGroups] = useState([])
@@ -91,7 +121,12 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             .sort((a, b) => (a.order || 0) - (b.order || 0))
             .map(ex => ({
               ...ex,
-              exercise_images: (ex.exercise_images || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+              exercise_images: (ex.exercise_images || [])
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map(img => ({
+                  ...img,
+                  image_url: regenerateImageUrl(img.image_url)
+                }))
             }))
         }))
 
@@ -122,7 +157,12 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             description: '',
             exercises: exercises.map(ex => ({
               ...ex,
-              exercise_images: (ex.exercise_images || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+              exercise_images: (ex.exercise_images || [])
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map(img => ({
+                  ...img,
+                  image_url: regenerateImageUrl(img.image_url)
+                }))
             }))
           }
           setExerciseGroups([fallbackGroup])
