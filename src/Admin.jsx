@@ -183,8 +183,8 @@ export default function Admin({ session, onBack }) {
         }
       }
 
-      // Save exercise images
-      if (savedExerciseId && exerciseImages.length > 0) {
+      // Save exercise images (eller slett eksisterende hvis ingen nye bilder)
+      if (savedExerciseId) {
         await saveExerciseImages(savedExerciseId)
       }
 
