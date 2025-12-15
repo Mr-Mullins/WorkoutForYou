@@ -21,55 +21,38 @@
 /* Tabs Container */
 .tabs-container {
   display: flex;
-  gap: 0;
-  margin: 10px 0 20px 0;
-  padding: 0;
-  border-bottom: 1px solid #b8b5b5;
+  gap: 10px;
+  margin: 10px 20px 20px 20px;
+  padding: 0 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  flex-wrap: wrap;
 }
 
 .tab-button {
-  padding:6px 10px;
-  margin-right: 5px;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-bottom: 1px solid transparent;
-  color: #502c2d;
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid #ddd;
+  color: #2c3e50;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: normal;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  position: relative;
-  bottom: -2px;
-  border-radius: 12px 12px 0 0;
-  min-width: 120px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.tab-button:last-child {
-  margin-right: 0;
+  border-radius: 8px;
 }
 
 .tab-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background: #ffffff;
+  background: #f8f9fa;
+  border-color: #ccc;
 }
 
 .tab-button.active {
-  background: #ffffff;
-  border-bottom-width: 1px;
+  background: #f0fff4;
+  border: 2px solid #27ae60;
+  color: #27ae60;
   font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.tab-button.active .tab-counter {
-  opacity: 1;
-  font-weight: 600;
 }
 
 .tab-button.completed {
@@ -78,26 +61,14 @@
   border-color: #27ae60;
 }
 
-.tab-button.completed:hover {
-  background: #e8f5e9;
-  border-color: #229954;
-  color: #229954;
-}
-
 .tab-button.completed.active {
-  background: #ffffff;
+  background: #f0fff4;
+  border: 2px solid #27ae60;
   color: #27ae60;
-  border-color: #27ae60;
-  border-bottom-color: #27ae60;
-}
-
-.tab-button.completed .tab-counter {
-  color: #27ae60;
-  opacity: 1;
 }
 
 .tab-name {
-  font-weight: 600;
+  font-weight: inherit;
   line-height: 1.2;
 }
 
@@ -111,7 +82,7 @@
 
 /* Exercises Wrapper */
 .exercises-wrapper {
-  margin: 20px;
+  margin: 0 20px 20px 20px;
   padding: 20px;
   box-sizing: border-box;
   display: flex;      
@@ -152,14 +123,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 160px;
-  min-width: 140px;
+  width: 120px;
+  min-width: 120px;
 }
 
 .exercise-image-thumbnail {
   width: 100%;
   height: auto;
-  min-height: 120px;
+  min-height: 80px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid #ddd;
@@ -351,7 +322,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.exercise-button:hover::before {
+.exercise-button.completed:hover::before {
   opacity: 1;
 }
 
@@ -371,23 +342,23 @@
   z-index: 1000;
 }
  */
-.exercise-button:hover::after {
+.exercise-button.completed:hover::after {
   opacity: 1;
-}
-
-.exercise-button:hover:not(:disabled) {
-  background: #dbdad5;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .exercise-button.completed {
   background: #4caf50;
   color: white;
-  cursor: default;
+  cursor: pointer;
 }
 
-.exercise-button:disabled {
+.exercise-button.completed:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-button:disabled:not(.completed) {
   cursor: not-allowed;
 }
 
@@ -585,13 +556,12 @@
   .tabs-container {
     margin-top: 10px;
     margin-bottom: 15px;
+    gap: 8px;
   }
 
   .tab-button {
-    margin-right: 20px;
-    padding: 12px 16px;
+    padding: 8px 14px;
     font-size: 0.9rem;
-    min-width: 100px;
   }
 
   .exercise-card {
