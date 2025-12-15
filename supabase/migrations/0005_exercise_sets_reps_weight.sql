@@ -67,3 +67,7 @@ CREATE POLICY "Users can delete own workout sets"
 -- Opprett indeks for raskere søk
 CREATE INDEX IF NOT EXISTS idx_workout_sets_workout_id ON workout_sets(workout_id);
 
+
+
+
+

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from './supabaseClient'
+import Oversikt from './Oversikt'
 import Dashboard from './Dashboard'
 import Admin from './Admin'
 import UserAdmin from './UserAdmin'
@@ -130,7 +131,7 @@ function App() {
   const [session, setSession] = useState(null)
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
-  const [currentView, setCurrentView] = useState('dashboard')
+  const [currentView, setCurrentView] = useState('oversikt')
   const [userProfile, setUserProfile] = useState(null)
 
   // Enkel admin-sjekk basert på e-postadresse
@@ -362,25 +363,27 @@ function App() {
         userProfile={userProfile}
       />
       <main className="main-content">
-        {currentView === 'admin' ? (
-          <Admin session={session} onBack={() => setCurrentView('dashboard')} />
+        {currentView === 'oversikt' ? (
+          <Oversikt session={session} userProfile={userProfile} />
+        ) : currentView === 'admin' ? (
+          <Admin session={session} onBack={() => setCurrentView('oversikt')} />
         ) : currentView === 'profile' ? (
-          <UserAdmin 
-            session={session} 
+          <UserAdmin
+            session={session}
             onProfileUpdate={() => {
               if (session?.user) {
                 fetchUserProfile(session.user.id)
               }
             }}
           />
-        ) : (
-          <Dashboard 
-            session={session} 
-            isAdmin={isAdmin()} 
-            onShowAdmin={() => setCurrentView('admin')} 
+        ) : currentView === 'dashboard' ? (
+          <Dashboard
+            session={session}
+            isAdmin={isAdmin()}
+            onShowAdmin={() => setCurrentView('admin')}
             userProfile={userProfile}
           />
-        )}
+        ) : null}
       </main>
     </div>
   )

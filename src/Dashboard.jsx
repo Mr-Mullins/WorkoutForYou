@@ -227,8 +227,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   async function fetchAllLastWeights() {
     try {
       const user = session.user
-      const today = new Date().toISOString().split('T')[0]
-      
+
       // Hent alle kg-øvelser fra exerciseGroups state
       const kgExercises = []
       exerciseGroups.forEach(group => {
@@ -245,14 +244,12 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
         return
       }
 
-      // Hent siste workout for hver kg-øvelse (ikke i dag)
-      // Vi bruker en subquery for å få den siste workout per exercise
+      // Hent siste workout for hver kg-øvelse (inkludert i dag)
       const { data: lastWorkouts, error: workoutError } = await supabase
         .from('workouts')
         .select('id, exercise_id, completed_at')
         .eq('user_id', user.id)
         .in('exercise_id', kgExercises)
-        .neq('completed_at', today)
         .order('completed_at', { ascending: false })
 
       if (workoutError || !lastWorkouts || lastWorkouts.length === 0) {
@@ -403,12 +400,6 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   const selectedGroup = exerciseGroups.find(g => g.id === selectedGroupId)
   const groupExercises = selectedGroup?.exercises || []
 
-  // Tab colors
-  const tabColors = [
-    '#3498db', '#e74c3c', '#f39c12', '#9b59b6',
-    '#1abc9c', '#e67e22', '#34495e', '#16a085'
-  ]
-
   return (
     <div className="dashboard-container">
       {selectedGroup && (
@@ -416,11 +407,10 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
           {/* Tabs */}
           {exerciseGroups.length > 1 && (
             <div className="tabs-container">
-              {exerciseGroups.map((group, index) => {
+              {exerciseGroups.map((group) => {
                 const groupExercises = group.exercises || []
                 const completedInGroup = groupExercises.filter(ex => completed.includes(ex.id)).length
                 const allCompleted = groupExercises.length > 0 && completedInGroup === groupExercises.length
-                const tabColor = tabColors[index % tabColors.length]
                 const isActive = selectedGroupId === group.id
 
                 return (
@@ -428,29 +418,6 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                     key={group.id}
                     className={`tab-button ${isActive ? 'active' : ''} ${allCompleted ? 'completed' : ''}`}
                     onClick={() => setSelectedGroupId(group.id)}
-                    style={{
-                      '--tab-color': tabColor,
-                      ...(isActive ? {
-                        borderTopColor: tabColor,
-                        borderRightColor: tabColor,
-                        borderLeftColor: tabColor,
-                        borderBottomColor: tabColor,
-                        color: tabColor
-                      } : {
-                        borderTopColor: `${tabColor}80`,
-                        borderRightColor: `${tabColor}80`,
-                        borderLeftColor: `${tabColor}80`,
-                        borderBottomColor: 'transparent',
-                        color: tabColor
-                      }),
-                      ...(allCompleted ? {
-                        borderTopColor: '#27ae60',
-                        borderRightColor: '#27ae60',
-                        borderLeftColor: '#27ae60',
-                        borderBottomColor: '#27ae60',
-                        color: '#27ae60'
-                      } : {})
-                    }}
                   >
                     <span className="tab-name">
                       {group.name} <span className="tab-counter">{completedInGroup}/{groupExercises.length}</span>
@@ -506,7 +473,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                         <p className="exercise-description">{ex.description || ex.desc}</p>
                         {ex.weight_unit === 'kg' && lastWeights.length > 0 && (
                           <div className="exercise-last-weights">
-                            <span className="last-weights-label">Forrige gang:</span>
+                            <span className="last-weights-label">Sist registrert:</span>
                             <span className="last-weights-values">
                               {lastWeights.map((set, index) => (
                                 <span key={index} className="last-weight-item">
