@@ -172,7 +172,8 @@ export default function Admin({ session, onBack }) {
               exercise_group_id: formData.exercise_group_id || selectedGroupId,
               sets: formData.sets ? parseInt(formData.sets) : 1,
               reps: formData.reps ? parseInt(formData.reps) : null,
-              weight_unit: formData.weight_unit || 'kropp'
+              weight_unit: formData.weight_unit || 'kropp',
+              user_id: session.user.id
             }
           ])
           .select()
