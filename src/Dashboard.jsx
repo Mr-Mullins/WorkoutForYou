@@ -636,6 +636,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                             step="0.5"
                             value={workoutWeights[setNum] || ''}
                             onChange={(e) => setWorkoutWeights({ ...workoutWeights, [setNum]: e.target.value })}
+                            onFocus={(e) => e.target.select()}
                             placeholder="0"
                           />
                         </div>

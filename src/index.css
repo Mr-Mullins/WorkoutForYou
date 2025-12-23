@@ -2,16 +2,112 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  /* Light mode colors (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f0f9f0;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-modal: #ffffff;
+  --bg-hover: #f5f5f5;
+  --bg-gradient-start: #f0fff4;
+  --bg-gradient-end: #e8f5e9;
+  --bg-quote: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+
+  --text-primary: #2c3e50;
+  --text-secondary: #555;
+  --text-muted: #666;
+  --text-light: #888;
+  --text-placeholder: #999;
+
+  --border-color: #ddd;
+  --border-light: #e0e0e0;
+  --border-card: #c8e6c9;
+
+  --accent-green: #27ae60;
+  --accent-green-light: #f0fff4;
+  --accent-green-border: #81c784;
+  --accent-green-hover: #229954;
+
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+
+  --warning-border: #ffc107;
+
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.08);
+  --shadow-strong: rgba(0, 0, 0, 0.1);
+
+  --button-secondary-bg: #ecf0f1;
+  --button-cancel-bg: #f0f0f0;
+  --button-cancel-hover: #e0e0e0;
+
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
+}
+
+/* Dark mode colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #252540;
+    --bg-tertiary: #1e3a2f;
+    --bg-card: #252540;
+    --bg-input: #2a2a45;
+    --bg-modal: #252540;
+    --bg-hover: #303050;
+    --bg-gradient-start: #1e3a2f;
+    --bg-gradient-end: #1a3025;
+    --bg-quote: linear-gradient(135deg, #252540 0%, #2a2a45 100%);
+
+    --text-primary: #e8e8e8;
+    --text-secondary: #c0c0c0;
+    --text-muted: #a0a0a0;
+    --text-light: #888;
+    --text-placeholder: #707070;
+
+    --border-color: #404060;
+    --border-light: #353555;
+    --border-card: #2e5a3f;
+
+    --accent-green: #4caf50;
+    --accent-green-light: #1e3a2f;
+    --accent-green-border: #4caf50;
+    --accent-green-hover: #66bb6a;
+
+    --success-bg: #1e3a2f;
+    --success-text: #81c784;
+    --success-border: #2e5a3f;
+
+    --error-bg: #3a1e1e;
+    --error-text: #ef9a9a;
+    --error-border: #5a2e2e;
+
+    --warning-border: #ffc107;
+
+    --shadow-light: rgba(0, 0, 0, 0.2);
+    --shadow-medium: rgba(0, 0, 0, 0.3);
+    --shadow-strong: rgba(0, 0, 0, 0.4);
+
+    --button-secondary-bg: #353555;
+    --button-cancel-bg: #353555;
+    --button-cancel-hover: #404060;
+
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+  }
 }
 
 a {
@@ -41,7 +137,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-secondary-bg);
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -51,17 +148,4 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }

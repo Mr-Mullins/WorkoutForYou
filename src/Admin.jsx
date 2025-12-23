@@ -641,6 +641,7 @@ export default function Admin({ session, onBack }) {
               type="number"
               value={groupFormData.order}
               onChange={(e) => setGroupFormData({ ...groupFormData, order: parseInt(e.target.value) || 0 })}
+              onFocus={(e) => e.target.select()}
               min="1"
             />
           </div>
@@ -823,6 +824,7 @@ export default function Admin({ session, onBack }) {
               type="number"
               value={formData.order}
               onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+              onFocus={(e) => e.target.select()}
               min="1"
             />
           </div>
@@ -832,6 +834,7 @@ export default function Admin({ session, onBack }) {
               type="number"
               value={formData.sets || 1}
               onChange={(e) => setFormData({ ...formData, sets: parseInt(e.target.value) || 1 })}
+              onFocus={(e) => e.target.select()}
               min="1"
             />
           </div>
@@ -841,6 +844,7 @@ export default function Admin({ session, onBack }) {
               type="number"
               value={formData.reps || ''}
               onChange={(e) => setFormData({ ...formData, reps: e.target.value ? parseInt(e.target.value) : null })}
+              onFocus={(e) => e.target.select()}
               min="1"
               placeholder="F.eks. 10"
             />

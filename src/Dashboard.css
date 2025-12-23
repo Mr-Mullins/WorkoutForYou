@@ -15,7 +15,7 @@
   padding: 40px;
   text-align: center;
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Tabs Container */
@@ -32,9 +32,9 @@
 
 .tab-button {
   padding: 10px 20px;
-  background: white;
-  border: 1px solid #ddd;
-  color: #2c3e50;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: normal;
   cursor: pointer;
@@ -44,27 +44,27 @@
 }
 
 .tab-button:hover {
-  background: #f8f9fa;
-  border-color: #ccc;
+  background: var(--bg-hover);
+  border-color: var(--border-light);
 }
 
 .tab-button.active {
-  background: #f0fff4;
-  border: 2px solid #27ae60;
-  color: #27ae60;
+  background: var(--accent-green-light);
+  border: 2px solid var(--accent-green);
+  color: var(--accent-green);
   font-weight: bold;
 }
 
 .tab-button.completed {
-  background: #f0fff4;
-  color: #27ae60;
-  border-color: #27ae60;
+  background: var(--accent-green-light);
+  color: var(--accent-green);
+  border-color: var(--accent-green);
 }
 
 .tab-button.completed.active {
-  background: #f0fff4;
-  border: 2px solid #27ae60;
-  color: #27ae60;
+  background: var(--accent-green-light);
+  border: 2px solid var(--accent-green);
+  color: var(--accent-green);
 }
 
 .tab-name {
@@ -95,12 +95,12 @@
 
 /* Exercise Card */
 .exercise-card {
-  background: #f0f9f0;
+  background: var(--bg-tertiary);
   border-radius: 12px;
   padding: 20px;
   margin: 0 0 15px 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid #c8e6c9;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  border: 1px solid var(--border-card);
   box-sizing: border-box;
   width: 100%;
   Max-width: 600px;
@@ -108,8 +108,8 @@
 }
 
 .exercise-card.completed {
-  background: #f0f9f0;
-  border: 1px solid #81c784;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent-green-border);
 }
 
 .exercise-card-content {
@@ -133,8 +133,8 @@
   min-height: 80px;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #ddd;
-  background: #f5f5f5;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,7 +229,7 @@
 .exercise-title {
   font-weight: bold;
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -249,7 +249,7 @@
 
 .exercise-description {
   font-size: 0.95rem;
-  color: #555;
+  color: var(--text-secondary);
   margin: 8px 0 0 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -268,13 +268,13 @@
   flex-direction: column;
   align-items: center;
   padding: 8px 14px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 6px;
 }
 
 .stat-label {
   font-size: 0.7rem;
-  color: #888;
+  color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: 2px;
@@ -283,26 +283,26 @@
 .stat-value {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .exercise-last-weights {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   border-radius: 6px;
-  border-left: 3px solid #4caf50;
+  border-left: 3px solid var(--accent-green);
   font-size: 0.9rem;
 }
 
 .last-weights-label {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-right: 8px;
 }
 
 .last-weights-values {
-  color: #777;
+  color: var(--text-muted);
 }
 
 .last-weight-number {
@@ -320,8 +320,8 @@
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: var(--button-secondary-bg);
+  color: var(--text-primary);
   font-weight: bold;
   font-size: 0.9rem;
   cursor: pointer;
@@ -399,7 +399,7 @@
 
 .no-exercises {
   text-align: center;
-  color: #999999;
+  color: var(--text-placeholder);
   padding: 40px 20px;
   font-size: 1rem;
 }
@@ -422,22 +422,22 @@
 
 .workout-modal-content {
   position: relative;
-  background: white;
+  background: var(--bg-modal);
   border-radius: 12px;
   padding: 30px;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px var(--shadow-strong);
 }
 
 .workout-modal-close {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: #f0f0f0;
-  color: #333;
+  background: var(--button-cancel-bg);
+  color: var(--text-primary);
   border: none;
   width: 32px;
   height: 32px;
@@ -452,13 +452,13 @@
 }
 
 .workout-modal-close:hover {
-  background: #e0e0e0;
+  background: var(--button-cancel-hover);
   transform: scale(1.1);
 }
 
 .workout-modal-content h2 {
   margin: 0 0 20px 0;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-size: 1.5rem;
 }
 
@@ -468,7 +468,7 @@
 
 .workout-modal-section h3 {
   margin: 0 0 15px 0;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -480,27 +480,29 @@
 .workout-weight-input-group label {
   display: block;
   margin-bottom: 5px;
-  color: #555;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .workout-weight-input-group input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 16px;
   box-sizing: border-box;
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
 .workout-weight-input-group input:focus {
   outline: none;
-  border-color: #4caf50;
+  border-color: var(--accent-green);
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
 }
 
 .last-workout-weights {
-  background: #f5f5f5;
+  background: var(--bg-secondary);
   padding: 15px;
   border-radius: 6px;
   margin-bottom: 15px;
@@ -508,7 +510,7 @@
 
 .last-weight-item {
   padding: 5px 0;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .copy-weights-btn {
@@ -531,7 +533,7 @@
 }
 
 .workout-modal-info {
-  color: #666;
+  color: var(--text-muted);
   font-style: italic;
   margin: 20px 0;
 }
@@ -541,7 +543,7 @@
   gap: 10px;
   margin-top: 25px;
   padding-top: 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-light);
 }
 
 .workout-save-btn {
@@ -565,8 +567,8 @@
 
 .workout-cancel-btn {
   flex: 1;
-  background: #f0f0f0;
-  color: #333;
+  background: var(--button-cancel-bg);
+  color: var(--text-primary);
   border: none;
   padding: 12px 24px;
   border-radius: 6px;
@@ -577,7 +579,7 @@
 }
 
 .workout-cancel-btn:hover {
-  background: #e0e0e0;
+  background: var(--button-cancel-hover);
   transform: translateY(-1px);
 }
 

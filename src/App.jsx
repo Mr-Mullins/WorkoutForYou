@@ -49,76 +49,42 @@ function UpdatePasswordForm() {
 
   return (
     <div className="auth-container">
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+      <div className="password-reset-header">
         <h2>Sett nytt passord</h2>
         <p>Vennligst skriv inn ditt nye passord nedenfor</p>
       </div>
-      <form onSubmit={handleUpdatePassword} style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Nytt passord:
-          </label>
+      <form onSubmit={handleUpdatePassword} className="password-reset-form">
+        <div className="password-form-group">
+          <label>Nytt passord:</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              fontSize: '16px'
-            }}
             placeholder="Skriv inn nytt passord"
           />
         </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Bekreft passord:
-          </label>
+        <div className="password-form-group">
+          <label>Bekreft passord:</label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              fontSize: '16px'
-            }}
             placeholder="Bekreft nytt passord"
           />
         </div>
         {message && (
-          <div style={{
-            padding: '10px',
-            marginBottom: '15px',
-            borderRadius: '4px',
-            backgroundColor: message.includes('Feil') ? '#fee' : '#efe',
-            color: message.includes('Feil') ? '#c33' : '#3c3'
-          }}>
+          <div className={`password-message ${message.includes('Feil') ? 'error' : 'success'}`}>
             {message}
           </div>
         )}
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            background: loading ? '#ccc' : '#27ae60',
-            color: 'white',
-            fontWeight: 'bold',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '16px'
-          }}
+          className="password-submit-btn"
         >
           {loading ? 'Oppdaterer...' : 'Oppdater passord'}
         </button>
@@ -310,11 +276,11 @@ function App() {
     
     return (
       <div className="auth-container">
-        <div style={{ maxWidth: '400px', width: '100%' }}>
+        <div className="auth-wrapper-container">
           <div className="auth-wrapper">
             <Auth
               supabaseClient={supabase}
-              appearance={{ 
+              appearance={{
                 theme: ThemeSupa,
                 variables: {
                   default: {
@@ -331,18 +297,8 @@ function App() {
               magicLink={false}
             />
           </div>
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button
-              onClick={() => setShowSignUp(true)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#646cff',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontSize: '14px'
-              }}
-            >
+          <div className="auth-signup-link">
+            <button onClick={() => setShowSignUp(true)}>
               Har du ikke konto? Registrer deg her
             </button>
           </div>

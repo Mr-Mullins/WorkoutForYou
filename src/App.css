@@ -17,6 +17,109 @@
   width: 100%;
 }
 
+/* Password Reset Form */
+.password-reset-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.password-reset-header h2 {
+  color: var(--text-primary);
+}
+
+.password-reset-header p {
+  color: var(--text-secondary);
+}
+
+.password-reset-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.password-form-group {
+  margin-bottom: 15px;
+}
+
+.password-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.password-form-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 16px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.password-form-group input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.password-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.password-message.success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+
+.password-message.error {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+}
+
+.password-submit-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent-green);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.password-submit-btn:hover:not(:disabled) {
+  background: var(--accent-green-hover);
+}
+
+.password-submit-btn:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* Auth wrapper container */
+.auth-wrapper-container {
+  max-width: 400px;
+  width: 100%;
+}
+
+.auth-signup-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.auth-signup-link button {
+  background: transparent;
+  border: none;
+  color: #646cff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
 /* Skjul "Sign in with Email" provider-knappen i Supabase Auth UI */
 /* Mer konservativ tilnærming - kun skjul provider-knappen, ikke hele skjemaet */
 .auth-wrapper button[data-state="default"]:first-child,
