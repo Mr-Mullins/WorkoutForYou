@@ -37,6 +37,31 @@
   color: #555;
 }
 
+/* Chuck Norris Quote */
+.chuck-quote {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 15px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  border-left: 4px solid #ffc107;
+}
+
+.chuck-quote-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.chuck-quote-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #495057;
+  font-style: italic;
+  line-height: 1.5;
+}
+
 /* App Info Section */
 .app-info-section {
   background: white;

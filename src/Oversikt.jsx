@@ -10,13 +10,25 @@ export default function Oversikt({ session, userProfile }) {
   })
   const [weeklyActivity, setWeeklyActivity] = useState([])
   const [loading, setLoading] = useState(true)
+  const [chuckQuote, setChuckQuote] = useState(null)
 
   useEffect(() => {
     if (session?.user) {
       fetchStats()
       fetchWeeklyActivity()
     }
+    fetchChuckQuote()
   }, [session])
+
+  async function fetchChuckQuote() {
+    try {
+      const response = await fetch('https://api.chucknorris.io/jokes/random')
+      const data = await response.json()
+      setChuckQuote(data.value)
+    } catch (error) {
+      console.error('Kunne ikke hente Chuck Norris-sitat:', error)
+    }
+  }
 
   function getGreeting() {
     const hour = new Date().getHours()
@@ -153,6 +165,13 @@ export default function Oversikt({ session, userProfile }) {
         <h1>{getGreeting()}{firstName ? `, ${firstName}` : ''}!</h1>
         <p className="greeting-subtitle">Klar for dagens treningsøkt?</p>
       </section>
+
+      {chuckQuote && (
+        <div className="chuck-quote">
+          <span className="chuck-quote-icon">💪</span>
+          <p className="chuck-quote-text">{chuckQuote}</p>
+        </div>
+      )}
 
       <section className="app-info-section">
         <h2>Om TreningsAppen</h2>

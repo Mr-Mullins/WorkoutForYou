@@ -257,6 +257,35 @@
   line-height: 1.6;
 }
 
+.exercise-stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.exercise-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
 .exercise-last-weights {
   margin-top: 10px;
   padding: 8px 12px;
@@ -273,7 +302,12 @@
 }
 
 .last-weights-values {
-  color: #555;
+  color: #777;
+}
+
+.last-weight-number {
+  font-weight: 700;
+  color: #4caf50;
 }
 
 .last-weight-item {

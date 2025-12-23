@@ -201,21 +201,23 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
   async function toggleExercise(exercise) {
     const isDone = completed.includes(exercise.id)
-    
+
+    // Hvis allerede utført, fjern registreringen
     if (isDone) {
-      alert("Allerede registrert i dag! Bra jobba.")
+      await removeWorkout(exercise.id)
       return
     }
 
-    // Hent vekt fra forrige gang hvis øvelsen bruker kg
-    let lastWorkoutWeights = []
-    if (exercise.weight_unit === 'kg') {
-      lastWorkoutWeights = await fetchLastWorkoutWeights(exercise.id)
+    // Hvis kroppsvekt-øvelse, lagre direkte uten modal
+    if (exercise.weight_unit === 'kropp') {
+      await saveWorkoutWithSets(exercise.id, {})
+      return
     }
 
-    // Åpne modal
+    // Kg-øvelse: Hent vekt fra forrige gang og åpne modal
+    const lastWorkoutWeights = await fetchLastWorkoutWeights(exercise.id)
     setWorkoutModal({ exercise, lastWorkoutWeights })
-    
+
     // Initialiser vekt-array med tomme verdier eller verdier fra forrige gang
     const initialWeights = {}
     const numSets = exercise.sets || 1
@@ -223,6 +225,46 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       initialWeights[i] = lastWorkoutWeights[i - 1]?.weight || ''
     }
     setWorkoutWeights(initialWeights)
+  }
+
+  async function removeWorkout(exerciseId) {
+    try {
+      const user = session.user
+      const today = new Date().toISOString().split('T')[0]
+
+      // Finn workout for denne øvelsen i dag
+      const { data: workout, error: findError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('exercise_id', exerciseId)
+        .eq('completed_at', today)
+        .single()
+
+      if (findError || !workout) {
+        console.error('Fant ikke workout:', findError)
+        return
+      }
+
+      // Slett workout_sets først (foreign key)
+      await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workout.id)
+
+      // Slett workout
+      const { error: deleteError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workout.id)
+
+      if (deleteError) throw deleteError
+
+      // Oppdater UI
+      setCompleted(completed.filter(id => id !== exerciseId))
+    } catch (error) {
+      alert('Klarte ikke fjerne registrering: ' + error.message)
+    }
   }
 
   async function fetchLastWorkoutWeights(exerciseId) {
@@ -500,25 +542,34 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                       <div className="exercise-card-main">
                         <div className="exercise-card-header">
                           <h3 className="exercise-title">{ex.title}</h3>
-                          <button 
+                          <button
                             className={`exercise-button ${isDone ? 'completed' : ''}`}
                             onClick={() => toggleExercise(ex)}
-                            disabled={isDone}
-                            data-tooltip={isDone ? "Øvelsen er allerede utført i dag" : "Klikk for å markere øvelsen som utført"}
+                            data-tooltip={isDone ? "Klikk for å angre" : "Klikk for å markere øvelsen som utført"}
                           >
                             {isDone && <span className="exercise-checkmark-icon">✓</span>}
                             {isDone ? 'Utført!' : 'Marker som utført'}
                           </button>
                         </div>
                         <p className="exercise-description">{ex.description || ex.desc}</p>
+                        <div className="exercise-stats">
+                          <div className="exercise-stat-box">
+                            <span className="stat-label">Sets</span>
+                            <span className="stat-value">{ex.sets || 1}</span>
+                          </div>
+                          <div className="exercise-stat-box">
+                            <span className="stat-label">Reps</span>
+                            <span className="stat-value">{ex.reps || '–'}</span>
+                          </div>
+                        </div>
                         {ex.weight_unit === 'kg' && lastWeights.length > 0 && (
                           <div className="exercise-last-weights">
                             <span className="last-weights-label">Sist registrert:</span>
                             <span className="last-weights-values">
                               {lastWeights.map((set, index) => (
                                 <span key={index} className="last-weight-item">
-                                  Set {set.set_number}: {set.weight} kg
-                                  {index < lastWeights.length - 1 && ', '}
+                                  <span className="last-weight-number">{set.weight}</span> kg
+                                  {index < lastWeights.length - 1 && ' · '}
                                 </span>
                               ))}
                             </span>
