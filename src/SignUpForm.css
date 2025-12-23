@@ -2,9 +2,9 @@
   max-width: 500px;
   margin: 0 auto;
   padding: 30px;
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px var(--shadow-strong);
 }
 
 .signup-header {
@@ -14,12 +14,12 @@
 
 .signup-header h2 {
   margin: 0 0 8px 0;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .signup-header p {
   margin: 0;
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -31,15 +31,15 @@
 }
 
 .signup-message.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
 .signup-message.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
 }
 
 .signup-form {
@@ -62,22 +62,24 @@
 
 .form-group label {
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
 .form-group input {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 16px;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #27ae60;
+  border-color: var(--accent-green);
   box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
 }
 
@@ -112,8 +114,8 @@
 .back-btn {
   padding: 12px;
   background: transparent;
-  color: #666;
-  border: 1px solid #ddd;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
@@ -121,8 +123,8 @@
 }
 
 .back-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
+  background: var(--bg-hover);
+  border-color: var(--border-light);
 }
 
 @media (max-width: 768px) {

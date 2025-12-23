@@ -12,14 +12,14 @@
   padding: 40px;
   text-align: center;
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Greeting Section */
 .greeting-section {
   text-align: center;
   padding: 30px 20px;
-  background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
   border-radius: 16px;
   margin-bottom: 24px;
 }
@@ -27,14 +27,14 @@
 .greeting-section h1 {
   margin: 0;
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 .greeting-subtitle {
   margin: 10px 0 0 0;
   font-size: 1.1rem;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* Chuck Norris Quote */
@@ -44,9 +44,9 @@
   gap: 12px;
   margin-bottom: 24px;
   padding: 15px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: var(--bg-quote);
   border-radius: 10px;
-  border-left: 4px solid #ffc107;
+  border-left: 4px solid var(--warning-border);
 }
 
 .chuck-quote-icon {
@@ -57,30 +57,30 @@
 .chuck-quote-text {
   margin: 0;
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--text-secondary);
   font-style: italic;
   line-height: 1.5;
 }
 
 /* App Info Section */
 .app-info-section {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  border: 1px solid var(--border-light);
 }
 
 .app-info-section h2 {
   margin: 0 0 12px 0;
   font-size: 1.2rem;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .app-info-section p {
   margin: 0;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -92,7 +92,7 @@
 .stats-section h2 {
   margin: 0 0 16px 0;
   font-size: 1.2rem;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .stats-cards {
@@ -102,25 +102,25 @@
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px 16px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  border: 1px solid var(--border-light);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px var(--shadow-strong);
 }
 
 .stat-number {
   display: block;
   font-size: 2.5rem;
   font-weight: 700;
-  color: #27ae60;
+  color: var(--accent-green);
   line-height: 1;
 }
 
@@ -128,23 +128,23 @@
   display: block;
   margin-top: 8px;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 /* Activity Chart Section */
 .activity-chart-section {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  border: 1px solid var(--border-light);
 }
 
 .activity-chart-section h2 {
   margin: 0 0 20px 0;
   font-size: 1.2rem;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .bar-chart {
@@ -189,13 +189,13 @@
   transform: translateX(-50%);
   font-size: 0.85rem;
   font-weight: 600;
-  color: #27ae60;
+  color: var(--accent-green);
 }
 
 .bar-label {
   margin-top: 8px;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -203,7 +203,7 @@
   text-align: center;
   margin: 16px 0 0 0;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--text-light);
 }
 
 /* Responsive Design */
