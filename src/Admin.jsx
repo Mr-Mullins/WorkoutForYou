@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import './Admin.css'
 
@@ -16,6 +16,9 @@ export default function Admin({ session, onBack }) {
   const [exerciseImages, setExerciseImages] = useState([])
   const [uploadingImages, setUploadingImages] = useState(false)
   const [selectedImageService, setSelectedImageService] = useState('midjourney')
+  const titleInputRef = useRef(null)
+  const [originalFormData, setOriginalFormData] = useState(null)
+  const [originalImages, setOriginalImages] = useState([])
 
   useEffect(() => {
     fetchExerciseGroups()
@@ -250,7 +253,7 @@ export default function Admin({ session, onBack }) {
   }
 
   async function handleEdit(exercise) {
-    setFormData({
+    const newFormData = {
       title: exercise.title,
       description: exercise.description,
       order: exercise.order,
@@ -259,10 +262,18 @@ export default function Admin({ session, onBack }) {
       sets: exercise.sets || 1,
       reps: exercise.reps || null,
       weight_unit: exercise.weight_unit || 'kropp'
-    })
+    }
+    setFormData(newFormData)
+    setOriginalFormData(newFormData)
     setEditingId(exercise.id)
     setShowAddForm(true)
-    
+
+    // Scroll til skjemaet og fokuser på tittelfeltet
+    setTimeout(() => {
+      titleInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      titleInputRef.current?.focus()
+    }, 100)
+
     // Fetch existing images
     try {
       const { data: images, error } = await supabase
@@ -272,16 +283,46 @@ export default function Admin({ session, onBack }) {
         .order('order', { ascending: true })
 
       if (error) throw error
-      
+
       if (images && images.length > 0) {
-        setExerciseImages(images.map(img => img.image_url))
+        const imageUrls = images.map(img => img.image_url)
+        setExerciseImages(imageUrls)
+        setOriginalImages(imageUrls)
       } else {
         setExerciseImages([])
+        setOriginalImages([])
       }
     } catch (error) {
       console.error('Error fetching exercise images:', error)
       setExerciseImages([])
+      setOriginalImages([])
     }
+  }
+
+  function hasUnsavedChanges() {
+    if (!originalFormData) return false
+    const formChanged = JSON.stringify(formData) !== JSON.stringify(originalFormData)
+    const imagesChanged = JSON.stringify(exerciseImages) !== JSON.stringify(originalImages)
+    return formChanged || imagesChanged
+  }
+
+  async function navigateExercise(direction) {
+    if (!editingId) return
+
+    const currentIndex = exercises.findIndex(ex => ex.id === editingId)
+    if (currentIndex === -1) return
+
+    const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1
+    if (newIndex < 0 || newIndex >= exercises.length) return
+
+    if (hasUnsavedChanges()) {
+      const shouldSave = window.confirm('Du har ulagrede endringer. Vil du lagre før du går videre?')
+      if (shouldSave) {
+        await handleSave()
+      }
+    }
+
+    handleEdit(exercises[newIndex])
   }
 
   function handleEditGroup(group) {
@@ -545,19 +586,19 @@ export default function Admin({ session, onBack }) {
         </p>
       </header>
 
-      <div className="admin-actions">
-        <button 
+      <div className="admin-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <button
           onClick={() => {
             setGroupFormData({ name: '', description: '', order: exerciseGroups.length + 1, active: true })
             setEditingGroupId(null)
             setShowGroupForm(!showGroupForm)
           }}
           className="add-btn"
-          style={{ marginRight: '10px' }}
+          style={{ fontSize: '0.9rem' }}
         >
-          {showGroupForm ? 'Avbryt' : '+ Legg til exercise group'}
+          {showGroupForm ? 'Avbryt' : '+ Ny øvelsesgruppe'}
         </button>
-        <button 
+        <button
           onClick={() => {
             setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
             setExerciseImages([])
@@ -566,9 +607,10 @@ export default function Admin({ session, onBack }) {
             setShowAddForm(!showAddForm)
           }}
           className="add-btn"
+          style={{ fontSize: '0.9rem' }}
           disabled={!selectedGroupId && exerciseGroups.length > 0}
         >
-          {showAddForm ? 'Avbryt' : '+ Legg til ny øvelse'}
+          {showAddForm ? 'Avbryt' : '+ Ny øvelse'}
         </button>
       </div>
 
@@ -647,15 +689,16 @@ export default function Admin({ session, onBack }) {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-            {exerciseGroups.map(group => (
-              <div key={group.id} style={{
+          {selectedGroupId && (() => {
+            const group = exerciseGroups.find(g => g.id === selectedGroupId)
+            if (!group) return null
+            return (
+              <div style={{
                 background: 'white',
                 padding: '15px',
                 borderRadius: '8px',
-                border: '1px solid #ddd',
-                flex: '1',
-                minWidth: '200px'
+                border: '2px solid #27ae60',
+                marginBottom: '20px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1rem' }}>{group.name}</h3>
@@ -667,33 +710,78 @@ export default function Admin({ session, onBack }) {
                   <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#666' }}>{group.description}</p>
                 )}
                 <div style={{ display: 'flex', gap: '5px' }}>
-                  <button 
+                  <button
                     onClick={() => handleEditGroup(group)}
                     className="action-btn edit-btn"
                     style={{ fontSize: '12px', padding: '6px 12px' }}
                   >
                     Rediger
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDeleteGroup(group.id)}
                     className="action-btn delete-btn"
                     style={{ fontSize: '12px', padding: '6px 12px' }}
                   >
                     Slett
                   </button>
+                  <button
+                    onClick={() => setSelectedGroupId(null)}
+                    className="action-btn"
+                    style={{ fontSize: '12px', padding: '6px 12px', background: '#95a5a6', color: 'white' }}
+                  >
+                    Vis alle grupper
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </div>
       )}
 
       {showAddForm && (
         <div className="form-card">
+          {editingId && exercises.length > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee' }}>
+              <button
+                onClick={() => navigateExercise('prev')}
+                disabled={exercises.findIndex(ex => ex.id === editingId) === 0}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  background: exercises.findIndex(ex => ex.id === editingId) === 0 ? '#f5f5f5' : 'white',
+                  color: exercises.findIndex(ex => ex.id === editingId) === 0 ? '#aaa' : '#2c3e50',
+                  cursor: exercises.findIndex(ex => ex.id === editingId) === 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                ← Forrige
+              </button>
+              <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                {exercises.findIndex(ex => ex.id === editingId) + 1} av {exercises.length}
+              </span>
+              <button
+                onClick={() => navigateExercise('next')}
+                disabled={exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  background: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? '#f5f5f5' : 'white',
+                  color: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? '#aaa' : '#2c3e50',
+                  cursor: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Neste →
+              </button>
+            </div>
+          )}
           <h2>{editingId ? 'Rediger øvelse' : 'Legg til ny øvelse'}</h2>
           <div className="form-group">
             <label>Øvelsens navn:</label>
             <input
+              ref={titleInputRef}
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
