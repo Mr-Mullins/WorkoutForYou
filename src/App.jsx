@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from './supabaseClient'
 import Oversikt from './Oversikt'
 import Dashboard from './Dashboard'
@@ -8,6 +6,7 @@ import Admin from './Admin'
 import UserAdmin from './UserAdmin'
 import Sidebar from './Sidebar'
 import SignUpForm from './SignUpForm'
+import LoginForm from './LoginForm'
 import './App.css'
 
 function UpdatePasswordForm() {
@@ -277,26 +276,7 @@ function App() {
     return (
       <div className="auth-container">
         <div className="auth-wrapper-container">
-          <div className="auth-wrapper">
-            <Auth
-              supabaseClient={supabase}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: '#27ae60',
-                      brandAccent: '#229954',
-                    }
-                  }
-                }
-              }}
-              providers={['email']}
-              view="sign_in"
-              onlyThirdPartyProviders={false}
-              magicLink={false}
-            />
-          </div>
+          <LoginForm />
           <div className="auth-signup-link">
             <button onClick={() => setShowSignUp(true)}>
               Har du ikke konto? Registrer deg her

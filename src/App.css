@@ -104,6 +104,58 @@
 .auth-wrapper-container {
   max-width: 400px;
   width: 100%;
+  box-sizing: border-box;
+}
+
+/* Supabase Auth UI - tving alle elementer til å respektere container-bredde */
+.auth-wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.auth-wrapper * {
+  max-width: 100%;
+  box-sizing: border-box !important;
+}
+
+.auth-wrapper input[type="email"],
+.auth-wrapper input[type="password"],
+.auth-wrapper input[type="text"] {
+  width: 100% !important;
+  max-width: 400px !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.auth-wrapper button {
+  width: 100% !important;
+  max-width: 400px !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.auth-wrapper div {
+  max-width: 100% !important;
+}
+
+/* Responsiv innloggingsskjerm for mobil */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 1rem;
+    overflow-x: hidden;
+  }
+
+  .auth-wrapper-container {
+    max-width: calc(100vw - 2rem);
+    width: 100%;
+  }
+
+  .auth-wrapper input[type="email"],
+  .auth-wrapper input[type="password"],
+  .auth-wrapper input[type="text"],
+  .auth-wrapper button {
+    max-width: 100% !important;
+  }
 }
 
 .auth-signup-link {
@@ -121,9 +173,6 @@
 }
 
 /* Skjul "Sign in with Email" provider-knappen i Supabase Auth UI */
-/* Mer konservativ tilnærming - kun skjul provider-knappen, ikke hele skjemaet */
-.auth-wrapper button[data-state="default"]:first-child,
-.auth-wrapper > div > div > div:first-child:has(button[data-state="default"]),
-.auth-wrapper [data-state] > div:first-child:has(button[data-state="default"]) {
+.auth-wrapper [data-provider="email"] {
   display: none !important;
 }
