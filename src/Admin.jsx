@@ -15,7 +15,6 @@ export default function Admin({ session, onBack }) {
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [exerciseImages, setExerciseImages] = useState([])
   const [uploadingImages, setUploadingImages] = useState(false)
-  const [selectedImageService, setSelectedImageService] = useState('midjourney')
   const titleInputRef = useRef(null)
   const [originalFormData, setOriginalFormData] = useState(null)
   const [originalImages, setOriginalImages] = useState([])
@@ -341,7 +340,6 @@ export default function Admin({ session, onBack }) {
     setExerciseImages([])
     setEditingId(null)
     setShowAddForm(false)
-    setSelectedImageService('midjourney')
   }
 
   async function handleImageUpload(event) {
@@ -419,44 +417,6 @@ export default function Admin({ session, onBack }) {
   function handleRemoveImage(index) {
     const newImages = exerciseImages.filter((_, i) => i !== index)
     setExerciseImages(newImages)
-  }
-
-  function generateImageSearchURL(exerciseTitle, exerciseDescription, service) {
-    // Definer prompt-maler for hver tjeneste
-    const servicePrompts = {
-      midjourney: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Midjourney AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      dalle: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. DALL-E AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      stableDiffusion: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Stable Diffusion AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      leonardo: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Leonardo.ai AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      generic: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. AI-generert tegning. Stilistisk illustrasjon. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder."
-    }
-    
-    // Velg riktig prompt-mal basert på tjeneste
-    const promptTemplate = servicePrompts[service] || servicePrompts.generic
-    
-    // Erstatt plassholdere med faktiske verdier
-    const fullPrompt = promptTemplate
-      .replace('[TITTEL]', exerciseTitle || '')
-      .replace('[BESKRIVELSE]', exerciseDescription || '')
-    
-    // URL-kode den fullstendige strengen
-    const encodedPrompt = encodeURIComponent(fullPrompt)
-    
-    // Generer URL
-    const baseURL = "https://www.google.com/search?tbm=isch&q="
-    const finalURL = baseURL + encodedPrompt
-    
-    return finalURL
-  }
-
-  function handleGenerateImageSearch() {
-    if (!formData.title || !formData.description) {
-      alert('Du må fylle ut både tittel og beskrivelse for å generere bildesøk')
-      return
-    }
-    
-    const url = generateImageSearchURL(formData.title, formData.description, selectedImageService)
-    window.open(url, '_blank')
   }
 
   function handleCancelGroup() {
@@ -603,7 +563,6 @@ export default function Admin({ session, onBack }) {
             setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
             setExerciseImages([])
             setEditingId(null)
-            setSelectedImageService('midjourney')
             setShowAddForm(!showAddForm)
           }}
           className="add-btn"
@@ -950,57 +909,6 @@ export default function Admin({ session, onBack }) {
                 </p>
               )}
             </div>
-          </div>
-          <div className="form-group" style={{ marginTop: '20px', marginBottom: '10px' }}>
-            <label>Velg AI-bildetjeneste:</label>
-            <select
-              value={selectedImageService}
-              onChange={(e) => setSelectedImageService(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                fontSize: '16px',
-                marginBottom: '10px'
-              }}
-            >
-              <option value="midjourney">Midjourney</option>
-              <option value="dalle">DALL-E</option>
-              <option value="stableDiffusion">Stable Diffusion</option>
-              <option value="leonardo">Leonardo.ai</option>
-              <option value="generic">Generisk AI-tegning</option>
-            </select>
-            <button
-              type="button"
-              onClick={handleGenerateImageSearch}
-              disabled={!formData.title || !formData.description}
-              style={{
-                width: '100%',
-                padding: '12px 20px',
-                background: !formData.title || !formData.description ? '#ccc' : '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: !formData.title || !formData.description ? 'not-allowed' : 'pointer',
-                opacity: !formData.title || !formData.description ? 0.6 : 1,
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (formData.title && formData.description) {
-                  e.target.style.background = '#2980b9'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (formData.title && formData.description) {
-                  e.target.style.background = '#3498db'
-                }
-              }}
-            >
-              Generer illustrasjon for øvelsen
-            </button>
           </div>
           <div className="form-actions">
             <button onClick={handleSave} className="save-btn">
