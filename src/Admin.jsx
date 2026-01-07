@@ -15,7 +15,6 @@ export default function Admin({ session, onBack }) {
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [exerciseImages, setExerciseImages] = useState([])
   const [uploadingImages, setUploadingImages] = useState(false)
-  const [selectedImageService, setSelectedImageService] = useState('midjourney')
   const titleInputRef = useRef(null)
   const [originalFormData, setOriginalFormData] = useState(null)
   const [originalImages, setOriginalImages] = useState([])
@@ -421,44 +420,6 @@ export default function Admin({ session, onBack }) {
     setExerciseImages(newImages)
   }
 
-  function generateImageSearchURL(exerciseTitle, exerciseDescription, service) {
-    // Definer prompt-maler for hver tjeneste
-    const servicePrompts = {
-      midjourney: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Midjourney AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      dalle: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. DALL-E AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      stableDiffusion: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Stable Diffusion AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      leonardo: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. Leonardo.ai AI-generert bilde. Stilistisk tegning. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder.",
-      generic: "Tegnet illustrasjon av en person som utfører øvelsen [TITTEL]. [BESKRIVELSE]. Fokus på riktig form og teknikk. AI-generert tegning. Stilistisk illustrasjon. Hvit bakgrunn. Ingen vannmerker. Søk i Google Bilder."
-    }
-    
-    // Velg riktig prompt-mal basert på tjeneste
-    const promptTemplate = servicePrompts[service] || servicePrompts.generic
-    
-    // Erstatt plassholdere med faktiske verdier
-    const fullPrompt = promptTemplate
-      .replace('[TITTEL]', exerciseTitle || '')
-      .replace('[BESKRIVELSE]', exerciseDescription || '')
-    
-    // URL-kode den fullstendige strengen
-    const encodedPrompt = encodeURIComponent(fullPrompt)
-    
-    // Generer URL
-    const baseURL = "https://www.google.com/search?tbm=isch&q="
-    const finalURL = baseURL + encodedPrompt
-    
-    return finalURL
-  }
-
-  function handleGenerateImageSearch() {
-    if (!formData.title || !formData.description) {
-      alert('Du må fylle ut både tittel og beskrivelse for å generere bildesøk')
-      return
-    }
-    
-    const url = generateImageSearchURL(formData.title, formData.description, selectedImageService)
-    window.open(url, '_blank')
-  }
-
   function handleCancelGroup() {
     setGroupFormData({ name: '', description: '', order: exerciseGroups.length + 1, active: true })
     setEditingGroupId(null)
@@ -636,16 +597,6 @@ export default function Admin({ session, onBack }) {
             />
           </div>
           <div className="form-group">
-            <label>Rekkefølge:</label>
-            <input
-              type="number"
-              value={groupFormData.order}
-              onChange={(e) => setGroupFormData({ ...groupFormData, order: parseInt(e.target.value) || 0 })}
-              onFocus={(e) => e.target.select()}
-              min="1"
-            />
-          </div>
-          <div className="form-group">
             <label>
               <input
                 type="checkbox"
@@ -678,9 +629,9 @@ export default function Admin({ session, onBack }) {
                 style={{
                   padding: '10px 20px',
                   borderRadius: '8px',
-                  border: selectedGroupId === group.id ? '2px solid #27ae60' : '1px solid #ddd',
-                  background: selectedGroupId === group.id ? '#f0fff4' : 'white',
-                  color: selectedGroupId === group.id ? '#27ae60' : '#2c3e50',
+                  border: selectedGroupId === group.id ? '2px solid var(--accent-green)' : '1px solid var(--border-color)',
+                  background: selectedGroupId === group.id ? 'var(--accent-green-light)' : 'var(--bg-card)',
+                  color: selectedGroupId === group.id ? 'var(--accent-green)' : 'var(--text-primary)',
                   fontWeight: selectedGroupId === group.id ? 'bold' : 'normal',
                   cursor: 'pointer',
                   fontSize: '14px'
@@ -695,20 +646,20 @@ export default function Admin({ session, onBack }) {
             if (!group) return null
             return (
               <div style={{
-                background: 'white',
+                background: 'var(--bg-card)',
                 padding: '15px',
                 borderRadius: '8px',
-                border: '2px solid #27ae60',
+                border: '2px solid var(--accent-green)',
                 marginBottom: '20px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem' }}>{group.name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>{group.name}</h3>
                   <span className={`status-badge ${group.active ? 'active' : 'inactive'}`}>
                     {group.active ? 'Aktiv' : 'Inaktiv'}
                   </span>
                 </div>
                 {group.description && (
-                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#666' }}>{group.description}</p>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{group.description}</p>
                 )}
                 <div style={{ display: 'flex', gap: '5px' }}>
                   <button
@@ -742,23 +693,23 @@ export default function Admin({ session, onBack }) {
       {showAddForm && (
         <div className="form-card">
           {editingId && exercises.length > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid var(--border-color)' }}>
               <button
                 onClick={() => navigateExercise('prev')}
                 disabled={exercises.findIndex(ex => ex.id === editingId) === 0}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  background: exercises.findIndex(ex => ex.id === editingId) === 0 ? '#f5f5f5' : 'white',
-                  color: exercises.findIndex(ex => ex.id === editingId) === 0 ? '#aaa' : '#2c3e50',
+                  border: '1px solid var(--border-color)',
+                  background: exercises.findIndex(ex => ex.id === editingId) === 0 ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                  color: exercises.findIndex(ex => ex.id === editingId) === 0 ? 'var(--text-light)' : 'var(--text-primary)',
                   cursor: exercises.findIndex(ex => ex.id === editingId) === 0 ? 'not-allowed' : 'pointer',
                   fontSize: '0.9rem'
                 }}
               >
                 ← Forrige
               </button>
-              <span style={{ color: '#666', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 {exercises.findIndex(ex => ex.id === editingId) + 1} av {exercises.length}
               </span>
               <button
@@ -767,9 +718,9 @@ export default function Admin({ session, onBack }) {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  background: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? '#f5f5f5' : 'white',
-                  color: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? '#aaa' : '#2c3e50',
+                  border: '1px solid var(--border-color)',
+                  background: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                  color: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? 'var(--text-light)' : 'var(--text-primary)',
                   cursor: exercises.findIndex(ex => ex.id === editingId) === exercises.length - 1 ? 'not-allowed' : 'pointer',
                   fontSize: '0.9rem'
                 }}
@@ -817,16 +768,6 @@ export default function Admin({ session, onBack }) {
                 <option key={group.id} value={group.id}>{group.name}</option>
               ))}
             </select>
-          </div>
-          <div className="form-group">
-            <label>Rekkefølge:</label>
-            <input
-              type="number"
-              value={formData.order}
-              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
-              onFocus={(e) => e.target.select()}
-              min="1"
-            />
           </div>
           <div className="form-group">
             <label>Antall sets:</label>
@@ -926,11 +867,12 @@ export default function Admin({ session, onBack }) {
                   style={{
                     display: 'inline-block',
                     padding: '10px 20px',
-                    background: '#f0f0f0',
-                    border: '1px solid #ddd',
+                    background: 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '6px',
                     cursor: uploadingImages ? 'wait' : 'pointer',
-                    opacity: uploadingImages ? 0.6 : 1
+                    opacity: uploadingImages ? 0.6 : 1,
+                    color: 'var(--text-primary)'
                   }}
                 >
                   {uploadingImages ? 'Laster opp...' : `+ Last opp bilde (${exerciseImages.length}/5)`}
@@ -950,57 +892,6 @@ export default function Admin({ session, onBack }) {
                 </p>
               )}
             </div>
-          </div>
-          <div className="form-group" style={{ marginTop: '20px', marginBottom: '10px' }}>
-            <label>Velg AI-bildetjeneste:</label>
-            <select
-              value={selectedImageService}
-              onChange={(e) => setSelectedImageService(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                fontSize: '16px',
-                marginBottom: '10px'
-              }}
-            >
-              <option value="midjourney">Midjourney</option>
-              <option value="dalle">DALL-E</option>
-              <option value="stableDiffusion">Stable Diffusion</option>
-              <option value="leonardo">Leonardo.ai</option>
-              <option value="generic">Generisk AI-tegning</option>
-            </select>
-            <button
-              type="button"
-              onClick={handleGenerateImageSearch}
-              disabled={!formData.title || !formData.description}
-              style={{
-                width: '100%',
-                padding: '12px 20px',
-                background: !formData.title || !formData.description ? '#ccc' : '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: !formData.title || !formData.description ? 'not-allowed' : 'pointer',
-                opacity: !formData.title || !formData.description ? 0.6 : 1,
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (formData.title && formData.description) {
-                  e.target.style.background = '#2980b9'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (formData.title && formData.description) {
-                  e.target.style.background = '#3498db'
-                }
-              }}
-            >
-              Generer illustrasjon for øvelsen
-            </button>
           </div>
           <div className="form-actions">
             <button onClick={handleSave} className="save-btn">

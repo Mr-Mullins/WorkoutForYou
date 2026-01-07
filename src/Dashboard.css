@@ -473,6 +473,49 @@
   font-weight: 600;
 }
 
+.workout-set-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.workout-set-label {
+  min-width: 50px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.workout-input-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.workout-input-group input {
+  width: 70px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 16px;
+  box-sizing: border-box;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.workout-input-group input:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.workout-input-unit {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  min-width: 35px;
+}
+
 .workout-weight-input-group {
   margin-bottom: 15px;
 }

@@ -38,9 +38,10 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   const [loading, setLoading] = useState(true)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [selectedImage, setSelectedImage] = useState(null)
-  const [workoutModal, setWorkoutModal] = useState(null) // { exercise: {...}, lastWorkoutWeights: [...] }
+  const [workoutModal, setWorkoutModal] = useState(null) // { exercise: {...}, lastWorkoutData: [...] }
   const [workoutWeights, setWorkoutWeights] = useState({}) // { setNumber: weight }
-  const [exerciseLastWeights, setExerciseLastWeights] = useState({}) // { exerciseId: [workout_sets] }
+  const [workoutReps, setWorkoutReps] = useState({}) // { setNumber: reps }
+  const [exerciseLastData, setExerciseLastData] = useState({}) // { exerciseId: [{ set_number, weight, reps }] }
 
   useEffect(() => {
     let isMounted = true
@@ -83,10 +84,10 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
     }
   }, [selectedImage])
 
-  // Hent vektdata når exerciseGroups er lastet
+  // Hent vekt/reps-data når exerciseGroups er lastet
   useEffect(() => {
     if (exerciseGroups.length > 0 && !loading && session?.user) {
-      fetchAllLastWeights()
+      fetchAllLastData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseGroups.length, loading])
@@ -208,23 +209,21 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       return
     }
 
-    // Hvis kroppsvekt-øvelse, lagre direkte uten modal
-    if (exercise.weight_unit === 'kropp') {
-      await saveWorkoutWithSets(exercise.id, {})
-      return
-    }
+    // Hent data fra forrige gang og åpne modal
+    const lastWorkoutData = await fetchLastWorkoutWeights(exercise.id)
+    setWorkoutModal({ exercise, lastWorkoutData })
 
-    // Kg-øvelse: Hent vekt fra forrige gang og åpne modal
-    const lastWorkoutWeights = await fetchLastWorkoutWeights(exercise.id)
-    setWorkoutModal({ exercise, lastWorkoutWeights })
-
-    // Initialiser vekt-array med tomme verdier eller verdier fra forrige gang
+    // Initialiser vekt og reps arrays
     const initialWeights = {}
+    const initialReps = {}
     const numSets = exercise.sets || 1
     for (let i = 1; i <= numSets; i++) {
-      initialWeights[i] = lastWorkoutWeights[i - 1]?.weight || ''
+      const lastSet = lastWorkoutData[i - 1]
+      initialWeights[i] = lastSet?.weight || ''
+      initialReps[i] = lastSet?.reps || ''
     }
     setWorkoutWeights(initialWeights)
+    setWorkoutReps(initialReps)
   }
 
   async function removeWorkout(exerciseId) {
@@ -271,7 +270,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
     try {
       const user = session.user
       const today = new Date().toISOString().split('T')[0]
-      
+
       // Hent siste workout for denne øvelsen (ikke i dag)
       const { data: lastWorkout, error: workoutError } = await supabase
         .from('workouts')
@@ -287,10 +286,10 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
         return []
       }
 
-      // Hent workout_sets for denne workout
+      // Hent workout_sets for denne workout (inkludert reps)
       const { data: sets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('*')
+        .select('set_number, weight, reps')
         .eq('workout_id', lastWorkout.id)
         .order('set_number', { ascending: true })
 
@@ -301,37 +300,37 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
       return sets || []
     } catch (error) {
-      console.error('Error fetching last workout weights:', error)
+      console.error('Error fetching last workout data:', error)
       return []
     }
   }
 
-  async function fetchAllLastWeights() {
+  async function fetchAllLastData() {
     try {
       const user = session.user
 
-      // Hent alle kg-øvelser fra exerciseGroups state
-      const kgExercises = []
+      // Hent alle øvelser fra exerciseGroups state
+      const allExerciseIds = []
       exerciseGroups.forEach(group => {
         if (group.exercises) {
           group.exercises.forEach(ex => {
-            if (ex.weight_unit === 'kg' && ex.active) {
-              kgExercises.push(ex.id)
+            if (ex.active) {
+              allExerciseIds.push(ex.id)
             }
           })
         }
       })
 
-      if (kgExercises.length === 0) {
+      if (allExerciseIds.length === 0) {
         return
       }
 
-      // Hent siste workout for hver kg-øvelse (inkludert i dag)
+      // Hent siste workout for hver øvelse (inkludert i dag)
       const { data: lastWorkouts, error: workoutError } = await supabase
         .from('workouts')
         .select('id, exercise_id, completed_at')
         .eq('user_id', user.id)
-        .in('exercise_id', kgExercises)
+        .in('exercise_id', allExerciseIds)
         .order('completed_at', { ascending: false })
 
       if (workoutError || !lastWorkouts || lastWorkouts.length === 0) {
@@ -354,7 +353,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
       const { data: allSets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('set_number, weight, workout_id')
+        .select('set_number, weight, reps, workout_id')
         .in('workout_id', workoutIds)
         .order('set_number', { ascending: true })
 
@@ -364,7 +363,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       }
 
       // Organiser sets per exercise_id
-      const weightsByExercise = {}
+      const dataByExercise = {}
       if (allSets) {
         // Må mappe workout_id tilbake til exercise_id
         const workoutToExercise = {}
@@ -375,24 +374,25 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
         allSets.forEach(set => {
           const exerciseId = workoutToExercise[set.workout_id]
           if (exerciseId) {
-            if (!weightsByExercise[exerciseId]) {
-              weightsByExercise[exerciseId] = []
+            if (!dataByExercise[exerciseId]) {
+              dataByExercise[exerciseId] = []
             }
-            weightsByExercise[exerciseId].push({
+            dataByExercise[exerciseId].push({
               set_number: set.set_number,
-              weight: set.weight
+              weight: set.weight,
+              reps: set.reps
             })
           }
         })
       }
 
-      setExerciseLastWeights(weightsByExercise)
+      setExerciseLastData(dataByExercise)
     } catch (error) {
-      console.error('Error fetching all last weights:', error)
+      console.error('Error fetching all last data:', error)
     }
   }
 
-  async function saveWorkoutWithSets(exerciseId, setsData) {
+  async function saveWorkoutWithSets(exerciseId, weightsData, repsData) {
     try {
       const user = session.user
       const today = new Date().toISOString().split('T')[0]
@@ -401,8 +401,8 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert([
-          { 
-            user_id: user.id, 
+          {
+            user_id: user.id,
             exercise_id: exerciseId,
             completed_at: today
           }
@@ -412,41 +412,55 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
       if (workoutError) throw workoutError
 
-      // Hvis øvelsen bruker kg og det er vektdata, lagre workout_sets
-      if (setsData && Object.keys(setsData).length > 0) {
-        const setsToInsert = Object.entries(setsData)
-          .filter(([setNum, weight]) => weight !== '' && weight !== null)
-          .map(([setNum, weight]) => ({
+      // Samle alle setnumre som har enten vekt eller reps
+      const allSetNums = new Set([
+        ...Object.keys(weightsData || {}),
+        ...Object.keys(repsData || {})
+      ])
+
+      const setsToInsert = []
+      allSetNums.forEach(setNum => {
+        const weight = weightsData?.[setNum]
+        const reps = repsData?.[setNum]
+
+        // Sjekk om vi har gyldig data å lagre
+        const hasWeight = weight !== '' && weight !== null && weight !== undefined
+        const hasReps = reps !== '' && reps !== null && reps !== undefined
+
+        if (hasWeight || hasReps) {
+          setsToInsert.push({
             workout_id: workout.id,
             set_number: parseInt(setNum),
-            weight: parseFloat(weight)
-          }))
-
-        if (setsToInsert.length > 0) {
-          const { error: setsError } = await supabase
-            .from('workout_sets')
-            .insert(setsToInsert)
-
-          if (setsError) throw setsError
+            weight: hasWeight ? parseFloat(weight) : null,
+            reps: hasReps ? parseInt(reps) : null
+          })
         }
+      })
+
+      if (setsToInsert.length > 0) {
+        const { error: setsError } = await supabase
+          .from('workout_sets')
+          .insert(setsToInsert)
+
+        if (setsError) throw setsError
       }
 
       setCompleted([...completed, exerciseId])
       setWorkoutModal(null)
       setWorkoutWeights({})
-      
-      // Oppdater vektdata for denne øvelsen i state
-      if (setsData && Object.keys(setsData).length > 0) {
-        const newWeights = Object.entries(setsData)
-          .filter(([setNum, weight]) => weight !== '' && weight !== null)
-          .map(([setNum, weight]) => ({
-            set_number: parseInt(setNum),
-            weight: parseFloat(weight)
-          }))
-        
-        setExerciseLastWeights(prev => ({
+      setWorkoutReps({})
+
+      // Oppdater data for denne øvelsen i state
+      if (setsToInsert.length > 0) {
+        const newData = setsToInsert.map(set => ({
+          set_number: set.set_number,
+          weight: set.weight,
+          reps: set.reps
+        }))
+
+        setExerciseLastData(prev => ({
           ...prev,
-          [exerciseId]: newWeights
+          [exerciseId]: newData
         }))
       }
     } catch (error) {
@@ -457,18 +471,22 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
   function handleCloseWorkoutModal() {
     setWorkoutModal(null)
     setWorkoutWeights({})
+    setWorkoutReps({})
   }
 
-  function handleCopyLastWeights() {
-    if (!workoutModal?.lastWorkoutWeights || workoutModal.lastWorkoutWeights.length === 0) {
+  function handleCopyLastData() {
+    if (!workoutModal?.lastWorkoutData || workoutModal.lastWorkoutData.length === 0) {
       return
     }
 
     const newWeights = {}
-    workoutModal.lastWorkoutWeights.forEach((set, index) => {
+    const newReps = {}
+    workoutModal.lastWorkoutData.forEach((set, index) => {
       newWeights[index + 1] = set.weight || ''
+      newReps[index + 1] = set.reps || ''
     })
     setWorkoutWeights(newWeights)
+    setWorkoutReps(newReps)
   }
 
   if (loading) {
@@ -515,23 +533,24 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
             {groupExercises.length > 0 ? (
               groupExercises.map(ex => {
                 const isDone = completed.includes(ex.id)
-                const images = ex.exercise_images && ex.exercise_images.length > 0 
+                const images = ex.exercise_images && ex.exercise_images.length > 0
                   ? ex.exercise_images.map(img => img.image_url)
                   : []
-                const lastWeights = exerciseLastWeights[ex.id] || []
+                const lastData = exerciseLastData[ex.id] || []
+                const isKgExercise = ex.weight_unit === 'kg'
                 return (
                   <div key={ex.id} className={`exercise-card ${isDone ? 'completed' : ''}`}>
                     <div className="exercise-card-content">
                       {images.length > 0 && (
                         <div className="exercise-images-container">
                           {images.map((imageUrl, index) => (
-                            <div 
+                            <div
                               key={index}
                               className="exercise-image-thumbnail"
                               onClick={() => setSelectedImage(imageUrl)}
                             >
-                              <img 
-                                src={imageUrl} 
+                              <img
+                                src={imageUrl}
                                 alt={`${ex.title} - Bilde ${index + 1}`}
                                 className="exercise-thumbnail-img"
                               />
@@ -562,14 +581,23 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                             <span className="stat-value">{ex.reps || '–'}</span>
                           </div>
                         </div>
-                        {ex.weight_unit === 'kg' && lastWeights.length > 0 && (
+                        {lastData.length > 0 && (
                           <div className="exercise-last-weights">
                             <span className="last-weights-label">Sist registrert:</span>
                             <span className="last-weights-values">
-                              {lastWeights.map((set, index) => (
+                              {lastData.map((set, index) => (
                                 <span key={index} className="last-weight-item">
-                                  <span className="last-weight-number">{set.weight}</span> kg
-                                  {index < lastWeights.length - 1 && ' · '}
+                                  {isKgExercise && set.weight && (
+                                    <><span className="last-weight-number">{set.weight}</span> kg</>
+                                  )}
+                                  {isKgExercise && set.weight && set.reps && ' × '}
+                                  {set.reps && (
+                                    <><span className="last-weight-number">{set.reps}</span> reps</>
+                                  )}
+                                  {!isKgExercise && !set.reps && set.weight && (
+                                    <><span className="last-weight-number">{set.weight}</span> kg</>
+                                  )}
+                                  {index < lastData.length - 1 && ' · '}
                                 </span>
                               ))}
                             </span>
@@ -610,12 +638,12 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
           {/* Workout Modal */}
           {workoutModal && (
-            <div 
+            <div
               className="workout-modal-overlay"
               onClick={handleCloseWorkoutModal}
             >
               <div className="workout-modal-content" onClick={(e) => e.stopPropagation()}>
-                <button 
+                <button
                   className="workout-modal-close"
                   onClick={handleCloseWorkoutModal}
                   aria-label="Lukk"
@@ -623,14 +651,14 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                   ×
                 </button>
                 <h2>Registrer {workoutModal.exercise.title}</h2>
-                
-                {workoutModal.exercise.weight_unit === 'kg' && (
-                  <>
-                    <div className="workout-modal-section">
-                      <h3>Vekt per set</h3>
-                      {Array.from({ length: workoutModal.exercise.sets || 1 }, (_, i) => i + 1).map(setNum => (
-                        <div key={setNum} className="workout-weight-input-group">
-                          <label>Set {setNum} (kg):</label>
+
+                <div className="workout-modal-section">
+                  <h3>Registrer per set</h3>
+                  {Array.from({ length: workoutModal.exercise.sets || 1 }, (_, i) => i + 1).map(setNum => (
+                    <div key={setNum} className="workout-set-row">
+                      <span className="workout-set-label">Set {setNum}:</span>
+                      {workoutModal.exercise.weight_unit === 'kg' && (
+                        <div className="workout-input-group">
                           <input
                             type="number"
                             step="0.5"
@@ -639,43 +667,53 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
                             onFocus={(e) => e.target.select()}
                             placeholder="0"
                           />
+                          <span className="workout-input-unit">kg</span>
+                        </div>
+                      )}
+                      <div className="workout-input-group">
+                        <input
+                          type="number"
+                          value={workoutReps[setNum] || ''}
+                          onChange={(e) => setWorkoutReps({ ...workoutReps, [setNum]: e.target.value })}
+                          onFocus={(e) => e.target.select()}
+                          placeholder="0"
+                        />
+                        <span className="workout-input-unit">reps</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {workoutModal.lastWorkoutData && workoutModal.lastWorkoutData.length > 0 && (
+                  <div className="workout-modal-section">
+                    <h3>Forrige gang</h3>
+                    <div className="last-workout-weights">
+                      {workoutModal.lastWorkoutData.map((set, index) => (
+                        <div key={index} className="last-weight-item">
+                          Set {set.set_number}:
+                          {workoutModal.exercise.weight_unit === 'kg' && set.weight && ` ${set.weight} kg`}
+                          {set.weight && set.reps && ' ×'}
+                          {set.reps && ` ${set.reps} reps`}
                         </div>
                       ))}
                     </div>
-
-                    {workoutModal.lastWorkoutWeights && workoutModal.lastWorkoutWeights.length > 0 && (
-                      <div className="workout-modal-section">
-                        <h3>Forrige gang</h3>
-                        <div className="last-workout-weights">
-                          {workoutModal.lastWorkoutWeights.map((set, index) => (
-                            <div key={index} className="last-weight-item">
-                              Set {set.set_number}: {set.weight} kg
-                            </div>
-                          ))}
-                        </div>
-                        <button 
-                          className="copy-weights-btn"
-                          onClick={handleCopyLastWeights}
-                        >
-                          Bruk vekt fra forrige gang
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {workoutModal.exercise.weight_unit === 'kropp' && (
-                  <p className="workout-modal-info">Ingen vektregistrering for denne øvelsen.</p>
+                    <button
+                      className="copy-weights-btn"
+                      onClick={handleCopyLastData}
+                    >
+                      Bruk data fra forrige gang
+                    </button>
+                  </div>
                 )}
 
                 <div className="workout-modal-actions">
-                  <button 
+                  <button
                     className="workout-save-btn"
-                    onClick={() => saveWorkoutWithSets(workoutModal.exercise.id, workoutWeights)}
+                    onClick={() => saveWorkoutWithSets(workoutModal.exercise.id, workoutWeights, workoutReps)}
                   >
                     Lagre
                   </button>
-                  <button 
+                  <button
                     className="workout-cancel-btn"
                     onClick={handleCloseWorkoutModal}
                   >
