@@ -289,7 +289,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
       // Hent workout_sets for denne workout (inkludert reps)
       const { data: sets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('set_number, weight, reps')
+        .select('*')
         .eq('workout_id', lastWorkout.id)
         .order('set_number', { ascending: true })
 
@@ -353,7 +353,7 @@ export default function Dashboard({ session, isAdmin = false, onShowAdmin, userP
 
       const { data: allSets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('set_number, weight, reps, workout_id')
+        .select('*')
         .in('workout_id', workoutIds)
         .order('set_number', { ascending: true })
 
