@@ -564,7 +564,6 @@ export default function Admin({ session, onBack }) {
             setFormData({ title: '', description: '', order: exercises.length + 1, active: true, exercise_group_id: selectedGroupId })
             setExerciseImages([])
             setEditingId(null)
-            setSelectedImageService('midjourney')
             setShowAddForm(!showAddForm)
           }}
           className="add-btn"
